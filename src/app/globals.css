@@ -1,26 +1,69 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-blue: #2B6CF5;
+  --color-blue-dark: #1a4fcc;
+  --color-navy: #0f2557;
+  --color-gray-text: #5C6F84;
+  --color-light-bg: #F4F8FF;
+  --color-card-bg: #ffffff;
+  --color-border: #E3ECF9;
+  --color-gold: #F59E0B;
+
+  --font-jakarta: "Plus Jakarta Sans", sans-serif;
+  --font-dm: "DM Sans", sans-serif;
+
+  --shadow-card: 0 8px 40px rgba(43, 108, 245, 0.12);
+  --shadow-sm: 0 2px 16px rgba(43, 108, 245, 0.08);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/*
+  All custom base styles go inside @layer base.
+  CSS outside any layer beats layered CSS regardless of specificity,
+  which would silently override Tailwind utility classes.
+  Keeping our resets inside @layer base means Tailwind utilities
+  (in @layer utilities) always win when you apply them.
+*/
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  body {
+    font-family: var(--font-jakarta);
+    color: #1a3060;
+    background: #ffffff;
+    font-size: 16px;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  a {
+    text-decoration: none;
+  }
+
+  img {
+    max-width: 100%;
+    display: block;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes carFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-15px); }
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.car-float {
+  animation: carFloat 3.5s ease-in-out infinite;
+  filter: drop-shadow(0 20px 40px rgba(43, 108, 245, 0.15));
+}
+
+.pulse-dot {
+  animation: pulseDot 1.5s ease-in-out infinite;
 }
