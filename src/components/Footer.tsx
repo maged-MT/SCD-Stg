@@ -2,10 +2,19 @@ import Link from "next/link";
 import Image from "next/image";
 import { Phone, MapPin } from "lucide-react";
 
+const quickLinks = [
+  { href: "/", label: "Home" },
+  { href: "/evaluate", label: "Sell Your Car" },
+  { href: "/about", label: "About Us" },
+  { href: "/blog", label: "News & Updates" },
+  { href: "/contact", label: "Contact" },
+  { href: "/policy", label: "Privacy Policy" },
+];
+
 export default function Footer() {
   return (
     <footer className="bg-[#070e1f] text-white pt-20 border-t-4 border-blue">
-      <div className="max-w-[1400px] mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-10 pb-16">
+      <div className="max-w-[1400px] mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 pb-16">
         {/* Brand */}
         <div>
           <Image
@@ -22,6 +31,23 @@ export default function Footer() {
           <div className="inline-flex items-center gap-2 mt-4 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm font-bold">
             🇦🇪 UAE&apos;s #1 Car Buying Service
           </div>
+        </div>
+
+        {/* Quick Links */}
+        <div>
+          <h5 className="text-[18px] font-extrabold mb-5">Quick Links</h5>
+          <ul className="space-y-3">
+            {quickLinks.map((link) => (
+              <li key={link.href}>
+                <Link
+                  href={link.href}
+                  className="text-white/70 text-sm font-semibold hover:text-blue transition-colors"
+                >
+                  {link.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* Contact */}

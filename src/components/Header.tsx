@@ -56,7 +56,7 @@ export default function Header() {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center bg-light-bg rounded-[40px] p-[5px] gap-0.5 border border-border flex-1 max-w-[580px] mx-5">
+        <nav className="hidden lg:flex items-center bg-light-bg rounded-[40px] p-[5px] gap-0.5 border border-border flex-1 max-w-[580px] mx-5">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -74,13 +74,13 @@ export default function Header() {
         <div className="flex items-center gap-3">
           <a
             href="tel:0522499708"
-            className="hidden md:flex items-center gap-2 font-semibold text-navy text-sm hover:text-blue transition-colors"
+            className="hidden lg:flex items-center gap-2 font-semibold text-navy text-sm hover:text-blue transition-colors"
           >
             <Phone size={15} strokeWidth={2.5} />
             0522499708
           </a>
           <button
-            className="md:hidden p-1.5 text-blue"
+            className="lg:hidden p-1.5 text-blue"
             onClick={() => setOpen(true)}
             aria-label="Open menu"
           >

@@ -40,7 +40,7 @@ export default function Home() {
       <JsonLd data={howToJsonLd} />
       {/* ===== HERO ===== */}
       <section className="bg-gradient-to-br from-[#f0f7ff] via-[#e2eeff] to-[#f0f7ff] border-b border-blue/10 rounded-b-[40px] lg:rounded-b-[60px] overflow-hidden">
-        <div className="max-w-[1400px] mx-auto px-6 py-16 lg:py-24 flex flex-col lg:grid lg:grid-cols-[1.1fr_0.9fr] lg:gap-20 lg:items-stretch">
+        <div className="max-w-[1400px] mx-auto px-6 pt-24 pb-16 lg:py-24 flex flex-col lg:grid lg:grid-cols-[1.1fr_0.9fr] lg:gap-20 lg:items-stretch">
           {/* Left */}
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left mb-8 lg:mb-0">
             {/* Badge */}

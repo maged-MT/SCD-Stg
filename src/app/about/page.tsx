@@ -23,7 +23,7 @@ export default function AboutPage() {
         ])}
       />
       {/* Hero */}
-      <section className="bg-gradient-to-br from-[#f0f7ff] via-[#e2eeff] to-[#f0f7ff] border-b border-blue/10 py-16 px-6 text-center">
+      <section className="bg-gradient-to-br from-[#f0f7ff] via-[#e2eeff] to-[#f0f7ff] border-b border-blue/10 pt-24 pb-16 px-6 text-center">
         <div className="max-w-[800px] mx-auto">
           <span className="inline-block bg-blue/10 text-blue text-[11px] font-bold tracking-[2.5px] uppercase px-4 py-1.5 rounded-full border border-blue/15 mb-4">
             About Smart Car Deals

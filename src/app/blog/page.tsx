@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import JsonLd from "@/components/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/schema";
+import { posts, tagColors } from "@/lib/blogPosts";
 
 export const metadata: Metadata = {
   title: "News & Updates | Smart Car Deals UAE",
@@ -10,71 +11,6 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/blog",
   },
-};
-
-const posts = [
-  {
-    slug: "how-to-get-best-price-for-your-car-uae",
-    title: "How to Get the Best Price for Your Car in the UAE",
-    excerpt:
-      "Discover the key factors that affect your car's value in the UAE market and how Smart Car Deals ensures you get a fair, market-based offer every time.",
-    date: "August 2026",
-    tag: "Tips & Advice",
-    readTime: "5 min read",
-  },
-  {
-    slug: "sell-car-without-bank-loan-clearance-uae",
-    title: "Can You Sell a Car With a Bank Loan in the UAE?",
-    excerpt:
-      "Many UAE car owners worry about selling a car that still has an active bank loan. We explain the process and how Smart Car Deals handles mortgage clearance for you.",
-    date: "July 2026",
-    tag: "FAQ",
-    readTime: "4 min read",
-  },
-  {
-    slug: "top-cars-selling-fast-dubai-2026",
-    title: "Top 10 Cars Selling Fastest in Dubai in 2026",
-    excerpt:
-      "Our data shows which makes and models are in highest demand right now in Dubai — which means better prices for sellers.",
-    date: "June 2026",
-    tag: "Market Trends",
-    readTime: "6 min read",
-  },
-  {
-    slug: "rta-transfer-process-uae-guide",
-    title: "A Complete Guide to RTA Transfer Process in UAE",
-    excerpt:
-      "The RTA transfer can be confusing. Here's a simple, step-by-step breakdown of what happens when you sell your car — and why Smart Car Deals handles it all for you.",
-    date: "May 2026",
-    tag: "Guide",
-    readTime: "7 min read",
-  },
-  {
-    slug: "sell-car-dubai-30-minutes",
-    title: "Is It Really Possible to Sell Your Car in 30 Minutes?",
-    excerpt:
-      "You may have seen our claim that we can buy your car in just 30 minutes. Here's exactly how we do it — and what you need to bring to make it happen.",
-    date: "April 2026",
-    tag: "Behind the Scenes",
-    readTime: "4 min read",
-  },
-  {
-    slug: "best-time-to-sell-car-uae",
-    title: "The Best Time of Year to Sell Your Car in the UAE",
-    excerpt:
-      "Does timing really matter when selling a car in the UAE? We share seasonal trends and market insights that can help you maximize your sale price.",
-    date: "March 2026",
-    tag: "Market Trends",
-    readTime: "5 min read",
-  },
-];
-
-const tagColors: Record<string, string> = {
-  "Tips & Advice": "bg-blue/10 text-blue border-blue/20",
-  FAQ: "bg-green-50 text-green-700 border-green-200",
-  "Market Trends": "bg-orange-50 text-orange-700 border-orange-200",
-  Guide: "bg-purple-50 text-purple-700 border-purple-200",
-  "Behind the Scenes": "bg-pink-50 text-pink-700 border-pink-200",
 };
 
 export default function BlogPage() {
@@ -87,7 +23,7 @@ export default function BlogPage() {
         ])}
       />
       {/* Hero */}
-      <section className="bg-gradient-to-br from-[#f0f7ff] via-[#e2eeff] to-[#f0f7ff] border-b border-blue/10 py-16 px-6 text-center">
+      <section className="bg-gradient-to-br from-[#f0f7ff] via-[#e2eeff] to-[#f0f7ff] border-b border-blue/10 pt-24 pb-16 px-6 text-center">
         <div className="max-w-[700px] mx-auto">
           <span className="inline-block bg-blue/10 text-blue text-[11px] font-bold tracking-[2.5px] uppercase px-4 py-1.5 rounded-full border border-blue/15 mb-4">
             News &amp; Updates
