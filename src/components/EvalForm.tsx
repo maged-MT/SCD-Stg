@@ -2,16 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import {
-  carData,
-  makes,
-  mileageOptions,
-  specsOptions,
-  emirateOptions,
-  yearOptions,
-} from "@/lib/carData";
-
-const SUBMIT_URL = "https://smartcardeals.net/apitestnew/submit_lead.php";
+import { carData, makes, mileageOptions, specsOptions, yearOptions } from "@/lib/carData";
 
 interface BodyType {
   id: number;
@@ -69,17 +60,10 @@ export default function EvalForm() {
   const [year, setYear] = useState("");
   const [mileage, setMileage] = useState("");
   const [specs, setSpecs] = useState("");
-  const [emirate, setEmirate] = useState("");
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
 
   // Vehicle-specs enrichment
   const [bodyType, setBodyType] = useState("");
   const [engineSize, setEngineSize] = useState("");
-
-  const [status, setStatus] = useState<"idle" | "submitting" | "error">("idle");
-  const [errorMsg, setErrorMsg] = useState("");
 
   // Populate model list when make changes
   useEffect(() => {
@@ -103,72 +87,23 @@ export default function EvalForm() {
   const engineSizeOptions = vehicleSpecs?.engineSizes ?? [];
   const showSpecsFields = !specsLoading && (bodyTypeOptions.length > 0 || engineSizeOptions.length > 0);
 
-  const handlePhoneInput = (val: string) => {
-    let digits = val.replace(/\D/g, "");
-    if (digits.startsWith("971")) digits = digits.slice(3);
-    if (digits.startsWith("0")) digits = digits.slice(1);
-    setPhone(digits);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg("");
 
-    if (phone.length < 9 || !phone.startsWith("5")) {
-      setErrorMsg("⚠️ Please enter a valid UAE phone number (e.g. 5X XXX XXXX).");
-      return;
-    }
-
-    setStatus("submitting");
-
-    const payload = new URLSearchParams({
-      company_name: name.trim(),
-      phone: "971" + phone,
-      email: email.trim(),
-      make,
-      model,
+    const apptParams = new URLSearchParams({
+      makeName: make,
+      modelName: model,
       year,
       mileage,
-      specs,
-      emirate,
-      ...(bodyType && { body_type: bodyType }),
-      ...(engineSize && { engine_size: engineSize }),
-      owner_id: "1",
-      lead_source_id: "1",
-      lead_status_id: "1",
+      spec: specs,
+      ...(bodyType && { bodyType }),
+      ...(engineSize && { engineSize }),
     });
-
-    try {
-      fetch(SUBMIT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: payload.toString(),
-        keepalive: true,
-      }).catch(() => {});
-
-      await new Promise((r) => setTimeout(r, 600));
-
-      const apptParams = new URLSearchParams({
-        makeName: make,
-        modelName: model,
-        year,
-        mileage,
-        spec: specs,
-        emirate,
-        ...(bodyType && { bodyType }),
-        ...(engineSize && { engineSize }),
-      });
-      router.push(`/appointment?${apptParams.toString()}`);
-    } catch {
-      setStatus("error");
-      setErrorMsg("Something went wrong. Please try again or call us directly.");
-    }
+    router.push(`/appointment?${apptParams.toString()}`);
   };
 
   const selectCls =
     "w-full px-4 py-3 border-[1.5px] border-border rounded-[10px] font-[family-name:var(--font-jakarta)] text-sm text-gray-text bg-light-bg appearance-none cursor-pointer outline-none transition-all focus:border-blue focus:bg-white focus:text-navy focus:shadow-[0_0_0_3px_rgba(43,108,245,0.1)]";
-  const inputCls =
-    "w-full px-4 py-3 border-[1.5px] border-border rounded-[10px] font-[family-name:var(--font-jakarta)] text-sm text-gray-text bg-light-bg outline-none transition-all focus:border-blue focus:bg-white focus:text-navy focus:shadow-[0_0_0_3px_rgba(43,108,245,0.1)]";
 
   return (
     <div
@@ -267,76 +202,20 @@ export default function EvalForm() {
           )}
 
           {/* Specs */}
-          <div className="relative">
+          <div className="col-span-2 relative">
             <select className={selectCls} value={specs} onChange={(e) => setSpecs(e.target.value)} required>
               <option value="" disabled>Car Specs</option>
               {specsOptions.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
             <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-text text-xs">▾</span>
           </div>
-
-          {/* Emirate */}
-          <div className="relative">
-            <select className={selectCls} value={emirate} onChange={(e) => setEmirate(e.target.value)} required>
-              <option value="" disabled>Select Emirate</option>
-              {emirateOptions.map((em) => <option key={em} value={em}>{em}</option>)}
-            </select>
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-text text-xs">▾</span>
-          </div>
-
-          {/* Name */}
-          <div>
-            <input
-              type="text"
-              className={inputCls}
-              placeholder="Your Full Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </div>
-
-          {/* Phone */}
-          <div className="flex border-[1.5px] border-border rounded-[10px] overflow-hidden bg-light-bg focus-within:border-blue focus-within:bg-white focus-within:shadow-[0_0_0_3px_rgba(43,108,245,0.1)] transition-all">
-            <span className="flex items-center gap-1 px-3 bg-blue/5 border-r border-border text-navy font-bold text-sm whitespace-nowrap shrink-0">
-              🇦🇪 +971
-            </span>
-            <input
-              type="tel"
-              className="flex-1 px-3 py-3 bg-transparent text-sm text-gray-text outline-none font-[family-name:var(--font-jakarta)]"
-              placeholder="5X XXX XXXX"
-              value={phone}
-              onChange={(e) => handlePhoneInput(e.target.value)}
-              maxLength={10}
-              required
-            />
-          </div>
-
-          {/* Email */}
-          <div className="col-span-2">
-            <input
-              type="email"
-              className={inputCls}
-              placeholder="Email Address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
         </div>
-
-        {errorMsg && (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-[10px] px-4 py-3 text-sm font-semibold mb-3">
-            {errorMsg}
-          </div>
-        )}
 
         <button
           type="submit"
-          disabled={status === "submitting"}
-          className="w-full py-4 bg-gradient-to-br from-blue to-blue-dark text-white rounded-xl font-extrabold text-[15px] tracking-[0.5px] shadow-[0_8px_24px_rgba(43,108,245,0.4)] hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(43,108,245,0.5)] active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed transition-all duration-200"
+          className="w-full py-4 bg-gradient-to-br from-blue to-blue-dark text-white rounded-xl font-extrabold text-[15px] tracking-[0.5px] shadow-[0_8px_24px_rgba(43,108,245,0.4)] hover:-translate-y-0.5 hover:shadow-[0_12px_32px_rgba(43,108,245,0.5)] active:translate-y-0 transition-all duration-200"
         >
-          {status === "submitting" ? "⏳ Submitting..." : "GET MY FREE OFFER →"}
+          GET MY FREE OFFER →
         </button>
 
         <p className="flex items-center justify-center gap-1.5 mt-3 text-xs text-gray-text">

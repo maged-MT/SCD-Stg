@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 const CARHUB_BASE_URL =
   process.env.CARHUB_BASE_URL || "https://carmarkethub.com";
 const CARHUB_API_KEY =
-  process.env.CARHUB_API_KEY || "baddelha_live_pk_2024_a8f9c3e1d4b7";
+  process.env.CARHUB_API_KEY || "dev_int_v1_7KqP2mX9Lr4Nz8WaE6TyU";
 
 // Server-side proxy — API key never reaches the browser
 export async function GET(request: Request) {
