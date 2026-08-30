@@ -7,6 +7,7 @@ const quickLinks = [
   { href: "/evaluate", label: "Sell Your Car" },
   { href: "/about", label: "About Us" },
   { href: "/blog", label: "News & Updates" },
+  { href: "/faq", label: "FAQ" },
   { href: "/contact", label: "Contact" },
   { href: "/policy", label: "Privacy Policy" },
 ];

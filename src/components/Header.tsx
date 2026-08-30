@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Phone, Menu, X, Home, Info, Newspaper, Mail, TrendingUp } from "lucide-react";
+import { Phone, Menu, X, Home, Info, Newspaper, Mail, TrendingUp, HelpCircle } from "lucide-react";
 
 const navLinks = [
   { href: "/evaluate", label: "Sell Your Car", cta: true },
@@ -18,6 +18,7 @@ const mobileLinks = [
   { href: "/evaluate", label: "Evaluate Car", icon: TrendingUp },
   { href: "/about", label: "About Us", icon: Info },
   { href: "/blog", label: "Blog", icon: Newspaper },
+  { href: "/faq", label: "FAQ", icon: HelpCircle },
   { href: "/contact", label: "Contact", icon: Mail },
 ];
 
