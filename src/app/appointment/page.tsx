@@ -53,14 +53,28 @@ interface Branch {
   openingHours?: string;
 }
 
-function useMarketValue(makeName: string, modelName: string, year: string, mileage: string, spec: string) {
+function useMarketValue(
+  makeName: string,
+  modelName: string,
+  year: string,
+  mileage: string,
+  spec: string,
+  trimId: string
+) {
   const [data, setData] = useState<MarketValue | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!makeName || !modelName || !year) return;
     setLoading(true);
-    const params = new URLSearchParams({ makeName, modelName, year, mileage, spec });
+    const params = new URLSearchParams({
+      makeName,
+      modelName,
+      year,
+      mileage,
+      spec,
+      ...(trimId && { trimId }),
+    });
     fetch(`/api/market-value?${params}`)
       .then((r) => r.json())
       .then((json) => {
@@ -69,7 +83,7 @@ function useMarketValue(makeName: string, modelName: string, year: string, milea
       })
       .catch(() => setData(null))
       .finally(() => setLoading(false));
-  }, [makeName, modelName, year, mileage, spec]);
+  }, [makeName, modelName, year, mileage, spec, trimId]);
 
   return { data, loading };
 }
@@ -124,6 +138,7 @@ function AppointmentContent() {
   const spec = search.get("spec") || "";
   const bodyType = search.get("bodyType") || "";
   const engineSize = search.get("engineSize") || "";
+  const trimId = search.get("trimId") || "";
 
   const days = useMemo(() => buildDays(14), []);
 
@@ -155,7 +170,7 @@ function AppointmentContent() {
   const [branchesLoading, setBranchesLoading] = useState(false);
   const [branchId, setBranchId] = useState<number | null>(null);
 
-  const { data: marketValue, loading: mvLoading } = useMarketValue(makeName, modelName, year, mileage, spec);
+  const { data: marketValue, loading: mvLoading } = useMarketValue(makeName, modelName, year, mileage, spec, trimId);
   const verified = otpStage === "verified" && !!accessToken;
   const selectedCity = useMemo(() => cities.find((c) => c.id === cityId) || null, [cities, cityId]);
   const selectedBranch = useMemo(() => branches.find((b) => b.id === branchId) || null, [branches, branchId]);

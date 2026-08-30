@@ -17,6 +17,7 @@ export async function GET(request: Request) {
   const year = searchParams.get("year") || "";
   const mileage = searchParams.get("mileage") || "";
   const spec = searchParams.get("spec") || "";
+  const requestedTrimId = searchParams.get("trimId") || "";
 
   if (!makeName || !modelName || !year) {
     return NextResponse.json(
@@ -35,7 +36,9 @@ export async function GET(request: Request) {
     const specsJson = await specsRes.json();
 
     const trims: { id: number; name: string }[] = specsJson?.data?.trims ?? [];
-    const trimId = trims[0]?.id ?? 0;
+    // Honor the trim the user picked in the eval form when it's a valid option, else fall back to the first trim.
+    const requestedId = Number(requestedTrimId) || 0;
+    const trimId = (requestedId && trims.some((t) => t.id === requestedId) ? requestedId : trims[0]?.id) ?? 0;
 
     if (!trimId) {
       return NextResponse.json(

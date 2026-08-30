@@ -45,7 +45,39 @@ export const carData: Record<string, string[]> = {
   Other: [],
 };
 
-export const makes = Object.keys(carData).sort();
+// Common GCC-market brands surface first; everything else follows alphabetically.
+const POPULAR_MAKES = [
+  "Toyota",
+  "Nissan",
+  "Mercedes-Benz",
+  "Lexus",
+  "Hyundai",
+  "Kia",
+  "BMW",
+  "Ford",
+  "Land Rover",
+  "Chevrolet",
+  "Mitsubishi",
+  "Honda",
+  "Jeep",
+  "Dodge",
+  "GMC",
+];
+
+const alphabeticalMakes = Object.keys(carData).sort();
+export const makes = [
+  ...POPULAR_MAKES.filter((m) => carData[m]),
+  ...alphabeticalMakes.filter((m) => !POPULAR_MAKES.includes(m)),
+];
+
+// Logos are served from the open-source car-logos-dataset via jsDelivr —
+// file names are the make's slug (lowercase, spaces -> hyphens), which lines
+// up with every key in carData except the synthetic "Other" entry.
+export function makeLogoUrl(make: string): string | null {
+  if (!make || make === "Other") return null;
+  const slug = make.toLowerCase().replace(/\s+/g, "-");
+  return `https://cdn.jsdelivr.net/gh/filippofilip95/car-logos-dataset@master/logos/thumb/${slug}.png`;
+}
 
 export const mileageOptions = [
   "0 – 5,000 km",
