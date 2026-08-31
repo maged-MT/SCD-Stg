@@ -1,3 +1,5 @@
+import sanitizeHtml from "sanitize-html";
+
 export interface BlogPost {
   id: number;
   slug: string;
@@ -47,6 +49,38 @@ const CAR_IMAGES = [
   "https://images.unsplash.com/photo-1494905998402-395d579af36f?w=1200&q=85",
 ];
 
+// The upstream WordPress source has been compromised with injected
+// <meta http-equiv="refresh"> / <script> redirects pointing at a
+// third-party link shortener. This allowlist strips anything but basic
+// article markup before content is rendered via dangerouslySetInnerHTML,
+// so a compromised source can't push scripts, redirects, or hidden
+// overlays onto this site regardless of what WordPress serves.
+function sanitizePostHtml(html: string) {
+  return sanitizeHtml(html, {
+    allowedTags: [
+      "p", "br", "hr",
+      "strong", "b", "em", "i", "u", "s", "sub", "sup", "mark", "small",
+      "a",
+      "ul", "ol", "li",
+      "h1", "h2", "h3", "h4", "h5", "h6",
+      "blockquote", "pre", "code",
+      "img", "figure", "figcaption",
+      "table", "thead", "tbody", "tfoot", "tr", "td", "th",
+      "span", "div",
+    ],
+    allowedAttributes: {
+      a: ["href", "title"],
+      img: ["src", "alt", "title", "width", "height"],
+      "*": ["class"],
+    },
+    allowedSchemes: ["http", "https", "mailto", "tel"],
+    allowedSchemesByTag: {
+      img: ["http", "https"],
+    },
+    disallowedTagsMode: "discard",
+  });
+}
+
 function decodeHtml(value: string) {
   return value
     .replace(/<[^>]*>/g, " ")
@@ -93,7 +127,7 @@ function normalizePost(post: WordPressPost, index: number): BlogPost {
     tag: category || "Selling Tips",
     readTime: `${Math.max(3, Math.ceil(contentText.split(/\s+/).length / 220))} min read`,
     image: imageFor(post, index),
-    content: post.content.rendered,
+    content: sanitizePostHtml(post.content.rendered),
   };
 }
 

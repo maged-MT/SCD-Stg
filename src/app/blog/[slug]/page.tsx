@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { parseFragment, serialize } from "parse5";
 import {
   Bookmark,
   Calendar,
@@ -75,12 +76,24 @@ function slugify(text: string) {
   );
 }
 
+// Slicing the source string at each heading can cut through a block
+// element that legitimately spans multiple headings (e.g. a wrapper
+// <div> opened before one heading and closed after the next), leaving
+// an individual slice with an orphaned closing tag or a dangling open
+// tag. Re-parsing each slice as its own fragment and serializing it
+// back out forces it closed/balanced on its own — exactly like a real
+// browser would render this slice in isolation — so it can't corrupt
+// the DOM of whatever renders after it and desync SSR from hydration.
+function normalizeFragment(html: string) {
+  return serialize(parseFragment(html));
+}
+
 function splitContentIntoSections(html: string): ContentSection[] {
   const headingRegex = /<h([12])[^>]*>([\s\S]*?)<\/h\1>/gi;
   const matches = [...html.matchAll(headingRegex)];
 
   if (matches.length === 0) {
-    return [{ id: "overview", title: "Overview", bodyHtml: html }];
+    return [{ id: "overview", title: "Overview", bodyHtml: normalizeFragment(html) }];
   }
 
   const leading = html.slice(0, matches[0].index ?? 0).trim();
@@ -97,7 +110,7 @@ function splitContentIntoSections(html: string): ContentSection[] {
     while (usedIds.has(id)) id = `${id}-${index + 1}`;
     usedIds.add(id);
 
-    return { id, title: rawTitle, bodyHtml };
+    return { id, title: rawTitle, bodyHtml: normalizeFragment(bodyHtml) };
   });
 }
 
