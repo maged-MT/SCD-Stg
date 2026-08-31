@@ -4,6 +4,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BottomNav from "@/components/BottomNav";
+import WhatsAppWidget from "@/components/WhatsAppWidget";
 import JsonLd from "@/components/JsonLd";
 import { BUSINESS, SITE_DESCRIPTION, SITE_LOGO, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/seo";
 import { BUSINESS_ID } from "@/lib/schema";
@@ -126,6 +127,7 @@ export default function RootLayout({
         <main>{children}</main>
         <Footer />
         <BottomNav />
+        <WhatsAppWidget />
       </body>
     </html>
   );
