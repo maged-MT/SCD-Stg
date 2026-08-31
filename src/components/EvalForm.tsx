@@ -8,6 +8,7 @@ import {
   makes,
   makeLogoUrl,
   mileageOptions,
+  popularModelCount,
   specsOptions,
   yearOptions,
 } from "@/lib/carData";
@@ -216,9 +217,22 @@ export default function EvalForm() {
     () => makes.filter((m) => m.toLowerCase().includes(makeSearch.trim().toLowerCase())),
     [makeSearch]
   );
+  const popCount = make ? (popularModelCount[make] ?? 0) : 0;
+  const popularModels = useMemo(() => models.slice(0, popCount), [models, popCount]);
+  const otherModels = useMemo(() => [...models.slice(popCount)].sort(), [models, popCount]);
+
+  const searchTerm = modelSearch.trim().toLowerCase();
+  const filteredPopular = useMemo(
+    () => (searchTerm ? popularModels.filter((m) => m.toLowerCase().includes(searchTerm)) : popularModels),
+    [popularModels, searchTerm]
+  );
+  const filteredOther = useMemo(
+    () => (searchTerm ? otherModels.filter((m) => m.toLowerCase().includes(searchTerm)) : otherModels),
+    [otherModels, searchTerm]
+  );
   const filteredModels = useMemo(
-    () => models.filter((m) => m.toLowerCase().includes(modelSearch.trim().toLowerCase())),
-    [models, modelSearch]
+    () => [...filteredPopular, ...filteredOther],
+    [filteredPopular, filteredOther]
   );
 
   const visibleMileageOptions = showMoreMileage ? mileageOptions : mileageOptions.slice(0, 5);
@@ -262,7 +276,7 @@ export default function EvalForm() {
         <h3 className="text-xl font-extrabold text-navy tracking-tight mb-1">
           Get Your Instant Offer 🚀
         </h3>
-        <p className="text-sm text-gray-text">Fill in your car details — it takes under 2 minutes</p>
+        <p className="text-sm text-gray-text">Fill in your car details — it takes under 30 seconds</p>
       </div>
 
       <StepHeader step={step} />
@@ -299,21 +313,57 @@ export default function EvalForm() {
         <div>
           <BackLink onClick={() => setStep(0)} label="Back to make" />
           <SearchInput value={modelSearch} onChange={setModelSearch} placeholder="Search models" />
-          <div className="grid grid-cols-3 gap-3 max-h-[420px] overflow-y-auto pr-1">
-            {filteredModels.map((m) => (
-              <button
-                key={m}
-                type="button"
-                onClick={() => selectModel(m)}
-                className={`py-3 px-2 rounded-xl border-[1.5px] text-sm font-extrabold transition-all ${
-                  model === m ? "border-blue bg-blue text-white" : "border-border text-navy hover:border-blue/40"
-                }`}
-              >
-                {m}
-              </button>
-            ))}
+          <div className="max-h-[420px] overflow-y-auto pr-1 space-y-4">
+            {/* Popular models */}
+            {filteredPopular.length > 0 && (
+              <div>
+                <p className="text-xs font-bold text-gray-text uppercase tracking-wider mb-2">Popular Models</p>
+                <div className="grid grid-cols-3 gap-3">
+                  {filteredPopular.map((m) => (
+                    <button
+                      key={m}
+                      type="button"
+                      onClick={() => selectModel(m)}
+                      className={`py-3 px-2 rounded-xl border-[1.5px] text-sm font-extrabold transition-all ${
+                        model === m ? "border-blue bg-blue text-white" : "border-blue/20 text-navy bg-blue/[0.03] hover:border-blue/40"
+                      }`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Divider */}
+            {filteredPopular.length > 0 && filteredOther.length > 0 && (
+              <div className="flex items-center gap-3">
+                <span className="flex-1 h-px bg-border" />
+                <span className="text-[11px] font-bold text-gray-text uppercase tracking-wider">All Models</span>
+                <span className="flex-1 h-px bg-border" />
+              </div>
+            )}
+
+            {/* Remaining models (alphabetical) */}
+            {filteredOther.length > 0 && (
+              <div className="grid grid-cols-3 gap-3">
+                {filteredOther.map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => selectModel(m)}
+                    className={`py-3 px-2 rounded-xl border-[1.5px] text-sm font-extrabold transition-all ${
+                      model === m ? "border-blue bg-blue text-white" : "border-border text-navy hover:border-blue/40"
+                    }`}
+                  >
+                    {m}
+                  </button>
+                ))}
+              </div>
+            )}
+
             {filteredModels.length === 0 && (
-              <p className="col-span-3 text-center text-sm text-gray-text py-8">No models match your search.</p>
+              <p className="text-center text-sm text-gray-text py-8">No models match your search.</p>
             )}
           </div>
         </div>
@@ -367,7 +417,7 @@ export default function EvalForm() {
                     key={m}
                     type="button"
                     onClick={() => setMileage(m)}
-                    className={pillCls(mileage === m) + " text-left"}
+                    className={pillCls(mileage === m) + " text-center"}
                   >
                     {m}
                   </button>

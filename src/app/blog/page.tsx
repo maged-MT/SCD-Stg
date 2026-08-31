@@ -45,9 +45,14 @@ export default function BlogPage() {
               key={post.slug}
               className="bg-white border border-border rounded-2xl overflow-hidden hover:border-blue hover:-translate-y-1 hover:shadow-[0_8px_40px_rgba(43,108,245,0.12)] transition-all duration-300 group"
             >
-              {/* Card image placeholder */}
-              <div className="h-[180px] bg-gradient-to-br from-light-bg to-blue/10 flex items-center justify-center">
-                <span className="text-5xl">🚗</span>
+              {/* Card image */}
+              <div className="h-[200px] overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={post.image}
+                  alt={post.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
               </div>
               <div className="p-6">
                 <div className="flex items-center gap-3 mb-4">

@@ -293,8 +293,12 @@ function AppointmentContent() {
 
   const handleConfirm = async () => {
     setContactError("");
-    if (!name.trim() || phone.length < 9 || !phone.startsWith("5") || !email.trim() || !cityId) {
-      setContactError("Please fill in your name, phone, email, and city to continue.");
+    if (!name.trim() || phone.length < 9 || !phone.startsWith("5") || !cityId) {
+      setContactError("Please fill in your name, phone, and city to continue.");
+      return;
+    }
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setContactError("Please enter a valid email address.");
       return;
     }
     if (!verified || !accessToken) {
@@ -561,10 +565,9 @@ function AppointmentContent() {
               <input
                 type="email"
                 className={inputCls}
-                placeholder="Email Address"
+                placeholder="Email Address (optional)"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
               />
               <div className="relative sm:col-span-2">
                 <select

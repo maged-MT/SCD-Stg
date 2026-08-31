@@ -11,6 +11,7 @@ export interface BlogPost {
   date: string;
   tag: string;
   readTime: string;
+  image: string;
   intro: string;
   sections: BlogSection[];
 }
@@ -24,6 +25,7 @@ export const posts: BlogPost[] = [
     date: "August 2026",
     tag: "Tips & Advice",
     readTime: "5 min read",
+    image: "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?w=800&q=80",
     intro:
       "Selling a car in the UAE should be simple, but most owners leave money on the table because they don't understand what actually drives a valuation. Whether you're selling privately, trading in at a dealership, or using a direct car buying service, knowing what pushes your price up — and what quietly drags it down — puts you back in control of the deal.",
     sections: [
@@ -59,6 +61,7 @@ export const posts: BlogPost[] = [
     date: "July 2026",
     tag: "FAQ",
     readTime: "4 min read",
+    image: "https://images.unsplash.com/photo-1553440569-bcc63803a83d?w=800&q=80",
     intro:
       "Yes — you can sell a financed car in the UAE, even if the loan isn't fully paid off. The confusion usually comes from the RTA's mortgage system, which registers the bank as a legal interest holder on your vehicle until the loan is cleared. Here's what that actually means for a sale.",
     sections: [
@@ -90,6 +93,7 @@ export const posts: BlogPost[] = [
     date: "June 2026",
     tag: "Market Trends",
     readTime: "6 min read",
+    image: "https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?w=800&q=80",
     intro:
       "Not every car depreciates at the same rate in the UAE. Some models are snapped up within days of listing because demand consistently outpaces supply. If you own one of these, you're in a strong position to sell quickly and at a competitive price.",
     sections: [
@@ -130,6 +134,7 @@ export const posts: BlogPost[] = [
     date: "May 2026",
     tag: "Guide",
     readTime: "7 min read",
+    image: "https://images.unsplash.com/photo-1555215695-3004980ad54e?w=800&q=80",
     intro:
       "Transferring vehicle ownership through the RTA is the final, legally required step of any car sale in the UAE. It's straightforward once you know the sequence — but a single missing document or unpaid fine can send you back to square one.",
     sections: [
@@ -176,6 +181,7 @@ export const posts: BlogPost[] = [
     date: "April 2026",
     tag: "Behind the Scenes",
     readTime: "4 min read",
+    image: "https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=800&q=80",
     intro:
       "It sounds too fast to be real, but a 30-minute car sale is achievable once you cut out the parts of the process that traditionally cause delays: haggling, waiting on bank approvals, and chasing paperwork after the fact.",
     sections: [
@@ -214,6 +220,7 @@ export const posts: BlogPost[] = [
     date: "March 2026",
     tag: "Market Trends",
     readTime: "5 min read",
+    image: "https://images.unsplash.com/photo-1542362567-b07e54358753?w=800&q=80",
     intro:
       "Timing can nudge your final price, but it rarely outweighs the basics of condition, mileage, and market demand. Still, if you have flexibility on when to sell, a few seasonal patterns in the UAE are worth knowing.",
     sections: [

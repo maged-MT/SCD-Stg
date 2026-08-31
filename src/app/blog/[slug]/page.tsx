@@ -85,8 +85,18 @@ export default async function BlogPostPage({
       />
 
       {/* Hero */}
-      <section className="bg-gradient-to-br from-[#f0f7ff] via-[#e2eeff] to-[#f0f7ff] border-b border-blue/10 pt-24 pb-16 px-6">
-        <div className="max-w-[800px] mx-auto text-center">
+      <section className="relative border-b border-blue/10 pt-24 pb-16 px-6 overflow-hidden">
+        {/* Background image */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={post.image}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/90 to-white/95" />
+
+        <div className="relative max-w-[800px] mx-auto text-center">
           <Link
             href="/blog"
             className="inline-flex items-center gap-1 text-sm font-bold text-blue hover:underline mb-6"
@@ -110,6 +120,18 @@ export default async function BlogPostPage({
           </h1>
         </div>
       </section>
+
+      {/* Featured image */}
+      <div className="max-w-[800px] mx-auto px-6 -mt-2">
+        <div className="rounded-2xl overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.1)] border border-border">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={post.image}
+            alt={post.title}
+            className="w-full h-[300px] lg:h-[400px] object-cover"
+          />
+        </div>
+      </div>
 
       {/* Article */}
       <section className="max-w-[800px] mx-auto px-6 py-16">
@@ -169,6 +191,14 @@ export default async function BlogPostPage({
                   key={related.slug}
                   className="bg-white border border-border rounded-2xl overflow-hidden hover:border-blue hover:-translate-y-1 hover:shadow-[0_8px_40px_rgba(43,108,245,0.12)] transition-all duration-300 group"
                 >
+                  <div className="h-[160px] overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={related.image}
+                      alt={related.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
                   <div className="p-6">
                     <div className="flex items-center gap-3 mb-4">
                       <span

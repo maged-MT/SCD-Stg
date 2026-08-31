@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Phone, MapPin } from "lucide-react";
+import { MapPin } from "lucide-react";
 
 const quickLinks = [
   { href: "/", label: "Home" },
@@ -10,6 +10,7 @@ const quickLinks = [
   { href: "/faq", label: "FAQ" },
   { href: "/contact", label: "Contact" },
   { href: "/policy", label: "Privacy Policy" },
+  { href: "/terms", label: "Terms & Conditions" },
 ];
 
 export default function Footer() {
@@ -115,7 +116,19 @@ export default function Footer() {
         <Link href="/policy" className="text-white/40 underline hover:text-white/70 transition-colors">
           Privacy Policy
         </Link>{" "}
-        | Powered by Genius Business Club
+        |{" "}
+        <Link href="/terms" className="text-white/40 underline hover:text-white/70 transition-colors">
+          Terms &amp; Conditions
+        </Link>{" "}
+        | Powered by{" "}
+        <a
+          href="https://motorteknika.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-white/60 underline hover:text-white/70 transition-colors"
+        >
+          MotorTeknika
+        </a>
       </div>
 
       {/* Spacer for mobile bottom nav */}

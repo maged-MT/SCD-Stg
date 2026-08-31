@@ -71,7 +71,7 @@ export default function EvaluatePage() {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
-            { num: "01", icon: "📋", title: "Fill the Form", desc: "Enter your car details above — make, model, year, mileage, and your contact info. Takes under 2 minutes." },
+            { num: "01", icon: "📋", title: "Fill the Form", desc: "Enter your car details above — make, model, year, mileage, and your contact info. Takes under 30 seconds." },
             { num: "02", icon: "🔍", title: "Free Inspection", desc: "Our expert evaluator visits you at your location in Dubai or any UAE emirate — completely free, no commitment." },
             { num: "03", icon: "💰", title: "Get Paid Same Day", desc: "Accept our offer and receive instant bank transfer or cash. We handle all paperwork and RTA transfer on the spot." },
           ].map((s) => (
