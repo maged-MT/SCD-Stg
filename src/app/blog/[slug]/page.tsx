@@ -4,9 +4,10 @@ import { notFound } from "next/navigation";
 import JsonLd from "@/components/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/schema";
 import { SITE_NAME, SITE_URL } from "@/lib/seo";
-import { getPostBySlug, getRelatedPosts, posts, tagColors } from "@/lib/blogPosts";
+import { getPostBySlug, getPosts, getRelatedPosts, tagColors } from "@/lib/blogPosts";
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const posts = await getPosts();
   return posts.map((post) => ({ slug: post.slug }));
 }
 
@@ -16,7 +17,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await getPostBySlug(slug);
 
   if (!post) {
     return {};
@@ -33,11 +34,13 @@ export async function generateMetadata({
       title: post.title,
       description: post.excerpt,
       url: `/blog/${post.slug}`,
+      images: [post.image],
     },
     twitter: {
       card: "summary_large_image",
       title: post.title,
       description: post.excerpt,
+      images: [post.image],
     },
   };
 }
@@ -48,19 +51,20 @@ export default async function BlogPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = getPostBySlug(slug);
+  const post = await getPostBySlug(slug);
 
   if (!post) {
     notFound();
   }
 
-  const relatedPosts = getRelatedPosts(post.slug);
+  const relatedPosts = await getRelatedPosts(post.slug);
 
   const articleJsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     headline: post.title,
     description: post.excerpt,
+    image: post.image,
     datePublished: post.date,
     author: {
       "@type": "Organization",
@@ -135,32 +139,10 @@ export default async function BlogPostPage({
 
       {/* Article */}
       <section className="max-w-[800px] mx-auto px-6 py-16">
-        <p className="text-lg text-gray-text leading-8 mb-10">{post.intro}</p>
-
-        {post.sections.map((section, index) => (
-          <div key={index} className="mb-10">
-            {section.heading && (
-              <h2 className="text-2xl font-extrabold text-navy tracking-tight mb-4">
-                {section.heading}
-              </h2>
-            )}
-            {section.paragraphs?.map((paragraph, pIndex) => (
-              <p key={pIndex} className="text-gray-text leading-8 mb-4">
-                {paragraph}
-              </p>
-            ))}
-            {section.list && (
-              <ul className="space-y-3 mt-2">
-                {section.list.map((item, lIndex) => (
-                  <li key={lIndex} className="flex items-start gap-3 text-gray-text leading-7">
-                    <span className="mt-1 h-1.5 w-1.5 rounded-full bg-blue flex-shrink-0" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        ))}
+        <article
+          className="text-gray-text leading-8 [&_h1]:text-3xl [&_h1]:font-black [&_h1]:text-navy [&_h1]:mb-5 [&_h2]:text-2xl [&_h2]:font-extrabold [&_h2]:text-navy [&_h2]:mt-10 [&_h2]:mb-4 [&_h3]:text-xl [&_h3]:font-extrabold [&_h3]:text-navy [&_h3]:mt-8 [&_h3]:mb-3 [&_p]:mb-5 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-6 [&_li]:mb-2 [&_a]:text-blue [&_a]:font-semibold [&_a]:underline [&_img]:rounded-2xl [&_img]:my-8"
+          dangerouslySetInnerHTML={{ __html: post.content }}
+        />
 
         <div className="mt-14 p-8 bg-light-bg border border-border rounded-2xl text-center">
           <h3 className="text-xl font-extrabold text-navy mb-2">
