@@ -89,7 +89,7 @@ function normalizePost(post: WordPressPost, index: number): BlogPost {
     slug: post.slug,
     title: decodeHtml(post.title.rendered),
     excerpt: decodeHtml(post.excerpt.rendered).replace(/\s*\[…\]$/, ""),
-    date: new Date(post.date).toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+    date: new Date(post.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
     tag: category || "Selling Tips",
     readTime: `${Math.max(3, Math.ceil(contentText.split(/\s+/).length / 220))} min read`,
     image: imageFor(post, index),

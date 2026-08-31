@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -21,6 +21,7 @@ import {
 const MapPicker = dynamic(() => import("@/components/MapPicker"), { ssr: false });
 
 const SUBMIT_URL = "https://smartcardeals.net/apitestnew/submit_lead.php";
+const APPOINTMENT_DRAFT_KEY = "scd_appointment_draft";
 
 interface MarketValue {
   adjustedPrice?: { min: number; max: number; average: number };
@@ -35,6 +36,21 @@ interface SavedProfile {
   name?: string;
   email?: string;
   cityId?: number;
+}
+
+interface AppointmentDraft {
+  phone?: string;
+  name?: string;
+  email?: string;
+  cityId?: number | null;
+  locationType?: "home" | "branch";
+  locationAddress?: string;
+  locationCoords?: [number, number] | null;
+  selectedDate?: string;
+  selectedTime?: string;
+  branchId?: number | null;
+  otpStage?: "idle" | "sent" | "verified";
+  accessToken?: string | null;
 }
 
 interface City {
@@ -149,6 +165,9 @@ function AppointmentContent() {
   const [cityId, setCityId] = useState<number | null>(null);
   const [contactError, setContactError] = useState("");
   const [booking, setBooking] = useState(false);
+  const phoneInputRef = useRef<HTMLInputElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const [draftReady, setDraftReady] = useState(false);
 
   // Phone verification — required to book, since booking is a customer-authenticated call
   const [otp, setOtp] = useState("");
@@ -174,6 +193,69 @@ function AppointmentContent() {
   const verified = otpStage === "verified" && !!accessToken;
   const selectedCity = useMemo(() => cities.find((c) => c.id === cityId) || null, [cities, cityId]);
   const selectedBranch = useMemo(() => branches.find((b) => b.id === branchId) || null, [branches, branchId]);
+
+  useEffect(() => {
+    let draft: AppointmentDraft | null = null;
+    try {
+      const raw = window.localStorage.getItem(APPOINTMENT_DRAFT_KEY);
+      draft = raw ? JSON.parse(raw) : null;
+    } catch {
+      window.localStorage.removeItem(APPOINTMENT_DRAFT_KEY);
+    }
+
+    queueMicrotask(() => {
+      if (draft) {
+        setPhone(draft.phone || "");
+        setName(draft.name || "");
+        setEmail(draft.email || "");
+        setCityId(draft.cityId ?? null);
+        setLocationType(draft.locationType || "home");
+        setLocationAddress(draft.locationAddress || "");
+        setLocationCoords(draft.locationCoords || null);
+        setSelectedDate(draft.selectedDate || days[0]?.iso || "");
+        setSelectedTime(draft.selectedTime || TIME_SLOTS[0].time);
+        setBranchId(draft.branchId ?? null);
+        if (draft.otpStage === "verified" && draft.accessToken) {
+          setOtpStage("verified");
+          setAccessToken(draft.accessToken);
+        }
+      }
+      setDraftReady(true);
+    });
+  }, [days]);
+
+  useEffect(() => {
+    if (!draftReady) return;
+    const draft: AppointmentDraft = {
+      phone,
+      name,
+      email,
+      cityId,
+      locationType,
+      locationAddress,
+      locationCoords,
+      selectedDate,
+      selectedTime,
+      branchId,
+      otpStage,
+      accessToken,
+    };
+    window.localStorage.setItem(APPOINTMENT_DRAFT_KEY, JSON.stringify(draft));
+  }, [
+    accessToken,
+    branchId,
+    cityId,
+    draftReady,
+    email,
+    locationAddress,
+    locationCoords,
+    locationType,
+    name,
+    otpStage,
+    phone,
+    selectedDate,
+    selectedTime,
+  ]);
 
   useEffect(() => {
     fetch("/api/locations/cities")
@@ -381,6 +463,7 @@ function AppointmentContent() {
         profileKey(phone),
         JSON.stringify({ name: name.trim(), email: email.trim(), cityId })
       );
+      window.localStorage.removeItem(APPOINTMENT_DRAFT_KEY);
     } catch {}
 
     router.push("/thank-you");
@@ -449,11 +532,21 @@ function AppointmentContent() {
                       {verified ? fmt(avg) : maskPrice(fmt(avg))}
                     </p>
                     {verified ? (
-                      <p className="text-xs text-blue font-semibold mt-0.5">Book Appointment now</p>
+                      <button
+                        type="button"
+                        onClick={() => nameInputRef.current?.focus()}
+                        className="text-xs text-blue font-semibold mt-0.5 cursor-pointer hover:underline"
+                      >
+                        Book Free Appointment Now!
+                      </button>
                     ) : (
-                      <p className="text-xs text-blue font-semibold mt-0.5 flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => phoneInputRef.current?.focus()}
+                        className="text-xs text-blue font-semibold mt-0.5 flex items-center gap-1 cursor-pointer hover:underline"
+                      >
                         <Lock size={12} /> Verify your phone number below to unlock
-                      </p>
+                      </button>
                     )}
                   </div>
                 </div>
@@ -495,6 +588,7 @@ function AppointmentContent() {
                     🇦🇪 +971
                   </span>
                   <input
+                    ref={phoneInputRef}
                     type="tel"
                     className="flex-1 px-3 py-3 bg-transparent text-sm text-navy outline-none"
                     placeholder="5X XXX XXXX"
@@ -555,6 +649,7 @@ function AppointmentContent() {
               </div>
 
               <input
+                ref={nameInputRef}
                 type="text"
                 className={inputCls}
                 placeholder="Your Full Name"
