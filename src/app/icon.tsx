@@ -13,15 +13,20 @@ export default function Icon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#0f2557",
-          borderRadius: 8,
-          color: "white",
-          fontSize: 20,
-          fontWeight: 800,
-          fontFamily: "sans-serif",
+          background: "linear-gradient(135deg, #2B6CF5 0%, #0f2557 100%)",
+          borderRadius: 7,
         }}
       >
-        S
+        <div
+          style={{
+            color: "white",
+            fontSize: 20,
+            fontWeight: 900,
+            fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+          }}
+        >
+          S
+        </div>
       </div>
     ),
     { ...size }

@@ -11,16 +11,34 @@ export default function AppleIcon() {
           width: "100%",
           height: "100%",
           display: "flex",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #2B6CF5, #0f2557)",
-          color: "white",
-          fontSize: 96,
-          fontWeight: 800,
-          fontFamily: "sans-serif",
+          background: "linear-gradient(135deg, #2B6CF5 0%, #0f2557 100%)",
+          borderRadius: 38,
         }}
       >
-        S
+        <div
+          style={{
+            color: "white",
+            fontSize: 96,
+            fontWeight: 900,
+            lineHeight: 1,
+            fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+            marginBottom: -8,
+          }}
+        >
+          SC
+        </div>
+        <div
+          style={{
+            width: 88,
+            height: 8,
+            background: "white",
+            borderRadius: 8,
+            marginTop: 18,
+          }}
+        />
       </div>
     ),
     { ...size }
