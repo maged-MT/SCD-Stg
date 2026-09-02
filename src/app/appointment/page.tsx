@@ -271,7 +271,12 @@ function AppointmentContent() {
     setBranchesLoading(true);
     fetch(`/api/locations/branches?city=${encodeURIComponent(selectedCity.slug)}`)
       .then((r) => r.json())
-      .then((json) => setBranches(Array.isArray(json) ? json : []))
+      .then((json) => {
+        const list: Branch[] = Array.isArray(json) ? json : [];
+        setBranches(list);
+        // Only one option — skip the extra click and preselect it.
+        if (list.length === 1) setBranchId(list[0].id);
+      })
       .catch(() => setBranches([]))
       .finally(() => setBranchesLoading(false));
   }, [locationType, selectedCity]);
