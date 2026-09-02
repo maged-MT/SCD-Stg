@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import EvalForm from "@/components/EvalForm";
+import GoogleReviewsSection from "@/components/GoogleReviewsSection";
 import JsonLd from "@/components/JsonLd";
+import { GOOGLE_RATING_SNAPSHOT } from "@/lib/googleReviews";
 import { BUSINESS_ID } from "@/lib/schema";
 
 const howToJsonLd = {
@@ -350,38 +352,37 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ===== CUSTOMER REVIEWS (Google) ===== */}
+      <GoogleReviewsSection />
+
       {/* ===== REVIEWS / TRUST ===== */}
       <section className="max-w-[1400px] mx-auto px-6 py-20 lg:py-24 grid grid-cols-1 lg:grid-cols-2 gap-14 items-center">
-        {/* Left: Reviews */}
-        <div>
+        {/* Left: Image + rating badge */}
+        <div className="relative mb-10 lg:mb-0">
           <Image
             src="https://www.smartcardeals.net/blog/wp-content/uploads/2025/05/545454-1.png"
             alt="Smart Car Deals"
             width={520}
             height={380}
-            className="w-full rounded-[20px] shadow-[0_20px_60px_rgba(0,0,0,0.12)] mb-5"
+            className="w-full rounded-[20px] shadow-[0_20px_60px_rgba(0,0,0,0.12)]"
           />
-          <div className="space-y-4">
-            {[
-              { rating: "4.8 / 5 Stars", name: "Sanjay Mehta", text: "Alaaeldin gave great support to sell my car — process was so easy!" },
-              { rating: "Excellent Service", name: "Ahmed K.", text: "Got cash in 25 minutes. Highly recommend Smart Car Deals!" },
-            ].map((r) => (
-              <div
-                key={r.name}
-                className="bg-white rounded-[20px] px-5 py-4 shadow-[20px_20px_40px_rgba(0,0,0,0.1)] flex items-center gap-4 max-w-[340px]"
-              >
-                <div className="w-12 h-12 bg-[#FFE8DA] rounded-full flex items-center justify-center text-2xl shrink-0">
-                  ⭐
-                </div>
-                <div>
-                  <h4 className="text-[17px] font-bold text-blue mb-1">{r.rating}</h4>
-                  <p className="text-[13px] text-gray-text">
-                    <strong>{r.name}:</strong> &quot;{r.text}&quot;
-                  </p>
-                </div>
+          <a
+            href="#reviews"
+            className="absolute -bottom-7 left-6 bg-white rounded-2xl px-5 py-4 shadow-[0_12px_32px_rgba(0,0,0,0.15)] flex items-center gap-3 hover:-translate-y-1 transition-transform duration-200"
+          >
+            <div className="w-12 h-12 bg-[#FFE8DA] rounded-full flex items-center justify-center text-2xl shrink-0">
+              ⭐
+            </div>
+            <div>
+              <div className="text-lg font-black text-navy leading-none">
+                {GOOGLE_RATING_SNAPSHOT.rating.toFixed(1)}{" "}
+                <span className="text-sm font-semibold text-gray-text">/ 5</span>
               </div>
-            ))}
-          </div>
+              <div className="text-xs text-gray-text font-semibold mt-1">
+                {GOOGLE_RATING_SNAPSHOT.total}+ Google Reviews
+              </div>
+            </div>
+          </a>
         </div>
 
         {/* Right: Content */}
