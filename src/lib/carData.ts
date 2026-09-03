@@ -129,17 +129,16 @@ export function makeLogoUrl(make: string): string | null {
 }
 
 export const mileageOptions = [
-  "0 – 5,000 km",
-  "5,000 – 10,000 km",
-  "10,000 – 20,000 km",
-  "20,000 – 30,000 km",
-  "30,000 – 40,000 km",
-  "40,000 – 50,000 km",
   "50,000 – 75,000 km",
   "75,000 – 100,000 km",
   "100,000 – 150,000 km",
   "150,000 – 200,000 km",
   "200,000+ km",
+  "0 – 10,000 km",
+  "10,000 – 20,000 km",
+  "20,000 – 30,000 km",
+  "30,000 – 40,000 km",
+  "40,000 – 50,000 km",
 ];
 
 export const specsOptions = ["GCC", "American", "European", "Japanese", "Other"];
