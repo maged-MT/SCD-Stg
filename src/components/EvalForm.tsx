@@ -417,7 +417,7 @@ export default function EvalForm() {
                     key={m}
                     type="button"
                     onClick={() => setMileage(m)}
-                    className={pillCls(mileage === m) + " text-center"}
+                    className={pillCls(mileage === m) + " min-h-12 text-center whitespace-nowrap"}
                   >
                     {m}
                   </button>
@@ -426,7 +426,7 @@ export default function EvalForm() {
                   <button
                     type="button"
                     onClick={() => setShowMoreMileage((v) => !v)}
-                    className="px-4 py-2.5 rounded-full border-[1.5px] border-dashed border-blue/40 text-sm font-bold text-blue"
+                    className="min-h-12 px-4 py-2.5 rounded-full border-[1.5px] border-blue text-sm font-bold text-blue bg-white hover:bg-blue/[0.03] transition-colors"
                   >
                     {showMoreMileage ? "Show less" : "Show more"}
                   </button>

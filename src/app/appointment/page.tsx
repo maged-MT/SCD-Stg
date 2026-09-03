@@ -77,7 +77,7 @@ function useMarketValue(
   trimId: string
 ) {
   const [data, setData] = useState<MarketValue | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(() => Boolean(makeName && modelName && year));
 
   useEffect(() => {
     if (!makeName || !modelName || !year) return;
@@ -188,10 +188,13 @@ function AppointmentContent() {
   const [branchesLoading, setBranchesLoading] = useState(false);
   const [branchId, setBranchId] = useState<number | null>(null);
 
-  const { data: marketValue } = useMarketValue(makeName, modelName, year, mileage, spec, trimId);
+  const { data: marketValue, loading: marketValueLoading } = useMarketValue(makeName, modelName, year, mileage, spec, trimId);
   const verified = otpStage === "verified" && !!accessToken;
   const selectedCity = useMemo(() => cities.find((c) => c.id === cityId) || null, [cities, cityId]);
   const selectedBranch = useMemo(() => branches.find((b) => b.id === branchId) || null, [branches, branchId]);
+  const minimumPrice = marketValue?.adjustedPrice?.min ?? marketValue?.minPrice ?? 0;
+  const maximumPrice = marketValue?.adjustedPrice?.max ?? marketValue?.maxPrice ?? 0;
+  const estimatedPrice = marketValue?.adjustedPrice?.average ?? marketValue?.averagePrice ?? Math.floor((minimumPrice + maximumPrice) / 2);
 
   useEffect(() => {
     let draft: AppointmentDraft | null = null;
@@ -290,7 +293,7 @@ function AppointmentContent() {
     let digits = val.replace(/\D/g, "");
     if (digits.startsWith("971")) digits = digits.slice(3);
     if (digits.startsWith("0")) digits = digits.slice(1);
-    setPhone(digits);
+    setPhone(digits.slice(0, 9));
     // Changing the number invalidates any in-progress / completed verification for the old one.
     if (otpStage !== "idle") {
       setOtpStage("idle");
@@ -510,7 +513,9 @@ function AppointmentContent() {
           <aside className="space-y-6 lg:sticky lg:top-24">
             {/* Reveal Price Card */}
             <div className="bg-white border-2 border-blue rounded-[20px] p-6 text-center shadow-[0_8px_30px_rgba(43,108,245,0.12)]">
-              <p className="text-xs font-black text-blue uppercase tracking-[1.5px] mb-2">Your vehicle market estimate</p>
+              <p className="text-xs font-black text-blue uppercase tracking-[1.5px] mb-2">
+                {verified && !marketValueLoading && estimatedPrice <= 0 ? "THE NEXT STEP" : "Your vehicle market estimate"}
+              </p>
               {!verified && <h2 className="text-2xl font-black text-navy mb-2">Get your free valuation</h2>}
 
               {!verified ? (
@@ -545,7 +550,7 @@ function AppointmentContent() {
                           placeholder="5X XXX XXXX"
                           value={phone}
                           onChange={(e) => handlePhoneInput(e.target.value)}
-                          maxLength={10}
+                          maxLength={9}
                         />
                         <button
                           type="button"
@@ -604,19 +609,30 @@ function AppointmentContent() {
                 </>
               ) : (
                 <>
-                  <p className="font-black text-navy text-3xl mb-5">{(() => {
-                    const min = marketValue?.adjustedPrice?.min ?? marketValue?.minPrice ?? 0;
-                    const max = marketValue?.adjustedPrice?.max ?? marketValue?.maxPrice ?? 0;
-                    const avg = marketValue?.adjustedPrice?.average ?? marketValue?.averagePrice ?? Math.floor((min + max) / 2);
-                    return `AED ${avg.toLocaleString()}`;
-                  })()}</p>
-                  <button
-                    type="button"
-                    onClick={() => nameInputRef.current?.focus()}
-                    className="inline-flex items-center gap-2 bg-blue hover:bg-blue-dark text-white font-extrabold text-sm px-6 py-3 rounded-lg transition-colors"
-                  >
-                    Book Appointment Now <ArrowRight size={16} />
-                  </button>
+                  {marketValueLoading ? (
+                    <div className="flex flex-col items-center gap-3 mb-5 py-2">
+                      <span className="w-8 h-8 rounded-full border-[3px] border-blue/20 border-t-blue animate-spin" />
+                      <p className="text-sm font-semibold text-gray-text">Preparing your valuation…</p>
+                    </div>
+                  ) : estimatedPrice > 0 ? (
+                    <p className="font-black text-navy text-3xl mb-5">AED {estimatedPrice.toLocaleString()}</p>
+                  ) : (
+                    <div className="mb-5">
+                      <h2 className="text-2xl font-black text-navy mb-2">Ready for your car inspection?</h2>
+                      <p className="text-sm text-gray-text leading-6 max-w-[280px] mx-auto">
+                        Book an appointment and our team will inspect your car at a time and location that suits you.
+                      </p>
+                    </div>
+                  )}
+                  {!marketValueLoading && (
+                    <button
+                      type="button"
+                      onClick={() => nameInputRef.current?.focus()}
+                      className="inline-flex items-center gap-2 bg-blue hover:bg-blue-dark text-white font-extrabold text-sm px-6 py-3 rounded-lg transition-colors"
+                    >
+                      Book Appointment Now <ArrowRight size={16} />
+                    </button>
+                  )}
                 </>
               )}
             </div>
@@ -673,7 +689,7 @@ function AppointmentContent() {
                         placeholder="5X XXX XXXX"
                         value={phone}
                         onChange={(e) => handlePhoneInput(e.target.value)}
-                        maxLength={10}
+                        maxLength={9}
                         required
                       />
                     </div>
@@ -827,7 +843,7 @@ function AppointmentContent() {
             <h2 className="text-base font-extrabold text-navy mb-4 flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-blue text-white text-xs flex items-center justify-center font-black">3</span>
               <MapPin size={16} className="text-blue" />
-              Your Location
+              {locationType === "branch" ? "Branch Location" : "Your Location"}
             </h2>
             {locationType === "home" ? (
               <>
