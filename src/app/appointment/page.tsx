@@ -12,10 +12,9 @@ import {
   Clock,
   ChevronRight,
   Car,
-  TrendingUp,
-  Lock,
   CheckCircle2,
   UserRound,
+  ArrowRight,
 } from "lucide-react";
 
 const MapPicker = dynamic(() => import("@/components/MapPicker"), { ssr: false });
@@ -104,10 +103,6 @@ function useMarketValue(
   return { data, loading };
 }
 
-function maskPrice(fmt: string) {
-  return fmt.replace(/\d/g, "•");
-}
-
 function profileKey(phone: string) {
   return `scd_profile_971${phone}`;
 }
@@ -166,10 +161,14 @@ function AppointmentContent() {
   const [contactError, setContactError] = useState("");
   const [booking, setBooking] = useState(false);
   const phoneInputRef = useRef<HTMLInputElement>(null);
+  const leftPhoneInputRef = useRef<HTMLInputElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const [draftReady, setDraftReady] = useState(false);
 
-  // Phone verification — required to book, since booking is a customer-authenticated call
+  // Phone verification — required to book, since booking is a customer-authenticated call.
+  // Verification only ever runs in one place at a time — whichever UI kicked it off — so the
+  // other panel shows a pointer instead of a second, out-of-sync copy of the same fields.
+  const [otpOrigin, setOtpOrigin] = useState<"left" | "right" | null>(null);
   const [otp, setOtp] = useState("");
   const [otpStage, setOtpStage] = useState<"idle" | "sent" | "verified">("idle");
   const [otpSubmitting, setOtpSubmitting] = useState(false);
@@ -189,7 +188,7 @@ function AppointmentContent() {
   const [branchesLoading, setBranchesLoading] = useState(false);
   const [branchId, setBranchId] = useState<number | null>(null);
 
-  const { data: marketValue, loading: mvLoading } = useMarketValue(makeName, modelName, year, mileage, spec, trimId);
+  const { data: marketValue } = useMarketValue(makeName, modelName, year, mileage, spec, trimId);
   const verified = otpStage === "verified" && !!accessToken;
   const selectedCity = useMemo(() => cities.find((c) => c.id === cityId) || null, [cities, cityId]);
   const selectedBranch = useMemo(() => branches.find((b) => b.id === branchId) || null, [branches, branchId]);
@@ -272,7 +271,12 @@ function AppointmentContent() {
     setBranchesLoading(true);
     fetch(`/api/locations/branches?city=${encodeURIComponent(selectedCity.slug)}`)
       .then((r) => r.json())
-      .then((json) => setBranches(Array.isArray(json) ? json : []))
+      .then((json) => {
+        const list: Branch[] = Array.isArray(json) ? json : [];
+        setBranches(list);
+        // Only one option — skip the extra click and preselect it.
+        if (list.length === 1) setBranchId(list[0].id);
+      })
       .catch(() => setBranches([]))
       .finally(() => setBranchesLoading(false));
   }, [locationType, selectedCity]);
@@ -293,6 +297,7 @@ function AppointmentContent() {
       setOtp("");
       setOtpError("");
       setAccessToken(null);
+      setOtpOrigin(null);
     }
   };
 
@@ -371,6 +376,7 @@ function AppointmentContent() {
     setOtpStage("idle");
     setOtp("");
     setOtpError("");
+    setOtpOrigin(null);
   };
 
   const handleConfirm = async () => {
@@ -496,84 +502,144 @@ function AppointmentContent() {
             Your Car&apos;s Estimated Value
           </h1>
           <p className="text-gray-text leading-7">
-            Book your free inspection below — verify your phone number to also see your exact offer.
+            Verify your phone number to reveal your exact offer, then book your free inspection.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[340px_minmax(0,1fr)] xl:grid-cols-[380px_minmax(0,1fr)] gap-6 lg:gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] gap-6 lg:gap-8 items-start">
           <aside className="space-y-6 lg:sticky lg:top-24">
-            {/* Market Value Card — the price stays masked until phone is verified */}
-            <div>
-          {mvLoading && (
-            <div className="bg-white border border-border rounded-2xl p-5 flex items-center gap-4 shadow-[0_2px_16px_rgba(43,108,245,0.06)] animate-pulse">
-              <div className="w-10 h-10 bg-light-bg rounded-xl shrink-0" />
-              <div className="flex-1 space-y-2">
-                <div className="h-3 bg-light-bg rounded w-1/3" />
-                <div className="h-5 bg-light-bg rounded w-1/2" />
-              </div>
-            </div>
-          )}
+            {/* Reveal Price Card */}
+            <div className="bg-white border-2 border-blue rounded-[20px] p-6 text-center shadow-[0_8px_30px_rgba(43,108,245,0.12)]">
+              <p className="text-xs font-black text-blue uppercase tracking-[1.5px] mb-2">Your vehicle market estimate</p>
+              {!verified && <h2 className="text-2xl font-black text-navy mb-2">Get your free valuation</h2>}
 
-          {!mvLoading && marketValue && (() => {
-            const min = marketValue.adjustedPrice?.min ?? marketValue.minPrice ?? 0;
-            const max = marketValue.adjustedPrice?.max ?? marketValue.maxPrice ?? 0;
-            const avg = marketValue.adjustedPrice?.average ?? marketValue.averagePrice ?? Math.floor((min + max) / 2);
-            const fmt = (n: number) => `AED ${n.toLocaleString()}`;
+              {!verified ? (
+                <>
+                  {otpOrigin !== "left" && (
+                    <p className="font-black text-navy text-3xl mb-5">AED •••,•••</p>
+                  )}
 
-            return (
-              <div className="bg-white border border-border rounded-2xl p-6 shadow-[0_2px_16px_rgba(43,108,245,0.08)]">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-blue/10 rounded-xl flex items-center justify-center shrink-0">
-                    <TrendingUp size={22} className="text-blue" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-text font-semibold uppercase tracking-wide">Estimated Market Value</p>
-                    <p className="font-black text-navy text-3xl leading-tight tracking-tight">
-                      {verified ? fmt(avg) : maskPrice(fmt(avg))}
+                  {otpOrigin === "right" ? (
+                    <p className="text-sm text-gray-text max-w-[220px] mx-auto leading-6">
+                      Verifying your number in <span className="font-semibold text-navy">Your Details</span> below — your exact price unlocks here once it&apos;s confirmed.
                     </p>
-                    {verified ? (
-                      <button
-                        type="button"
-                        onClick={() => nameInputRef.current?.focus()}
-                        className="text-xs text-blue font-semibold mt-0.5 cursor-pointer hover:underline"
-                      >
-                        Book Free Appointment Now!
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => phoneInputRef.current?.focus()}
-                        className="text-xs text-blue font-semibold mt-0.5 flex items-center gap-1 cursor-pointer hover:underline"
-                      >
-                        <Lock size={12} /> Verify your phone number below to unlock
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
-        </div>
+                  ) : otpOrigin !== "left" ? (
+                    <button
+                      type="button"
+                      onClick={() => setOtpOrigin("left")}
+                      className="inline-flex items-center gap-2 bg-blue hover:bg-blue-dark text-white font-extrabold text-sm px-6 py-3 rounded-lg transition-colors shadow-[0_6px_20px_rgba(43,108,245,0.35)]"
+                    >
+                      REVEAL PRICE <ArrowRight size={16} />
+                    </button>
+                  ) : otpStage === "idle" ? (
+                    <div className="max-w-sm mx-auto text-left">
+                      <div className="flex border-[1.5px] border-border rounded-[10px] overflow-hidden bg-white focus-within:border-blue focus-within:shadow-[0_0_0_3px_rgba(43,108,245,0.1)] transition-all">
+                        <span className="flex items-center gap-1 px-3 bg-blue/5 border-r border-border text-navy font-bold text-sm whitespace-nowrap shrink-0">
+                          🇦🇪 +971
+                        </span>
+                        <input
+                          ref={leftPhoneInputRef}
+                          type="tel"
+                          autoFocus
+                          className="flex-1 min-w-0 px-3 py-3 bg-transparent text-sm text-navy outline-none"
+                          placeholder="5X XXX XXXX"
+                          value={phone}
+                          onChange={(e) => handlePhoneInput(e.target.value)}
+                          maxLength={10}
+                        />
+                        <button
+                          type="button"
+                          onClick={handleSendOtp}
+                          disabled={otpSubmitting || phone.length < 9 || !phone.startsWith("5")}
+                          className="px-4 text-xs font-extrabold text-blue border-l border-border bg-blue/5 hover:bg-blue/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+                        >
+                          {otpSubmitting ? "…" : "SEND"}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="max-w-sm mx-auto text-left">
+                      <p className="text-xs text-gray-text mb-2">Code sent to +971 {phone}</p>
+                      <div className="flex border-[1.5px] border-border rounded-[10px] overflow-hidden bg-white focus-within:border-blue focus-within:shadow-[0_0_0_3px_rgba(43,108,245,0.1)] transition-all">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          autoFocus
+                          className="flex-1 min-w-0 px-3 py-3 bg-transparent text-center text-sm tracking-[4px] font-bold text-navy outline-none"
+                          placeholder="••••••"
+                          value={otp}
+                          onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                          maxLength={6}
+                        />
+                        <button
+                          type="button"
+                          onClick={handleVerifyOtp}
+                          disabled={otpSubmitting}
+                          className="px-4 text-xs font-extrabold text-blue border-l border-border bg-blue/5 hover:bg-blue/10 transition-colors disabled:opacity-50 shrink-0"
+                        >
+                          {otpSubmitting ? "…" : "SUBMIT"}
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between mt-2">
+                        <button
+                          type="button"
+                          onClick={handleSendOtp}
+                          disabled={otpSubmitting}
+                          className="text-xs text-blue font-semibold hover:underline disabled:opacity-60"
+                        >
+                          Resend code
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleChangeNumber}
+                          className="text-xs text-gray-text hover:text-blue transition-colors"
+                        >
+                          Change number
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {otpOrigin === "left" && otpError && <p className="text-red-600 text-xs font-semibold mt-3">{otpError}</p>}
+                </>
+              ) : (
+                <>
+                  <p className="font-black text-navy text-3xl mb-5">{(() => {
+                    const min = marketValue?.adjustedPrice?.min ?? marketValue?.minPrice ?? 0;
+                    const max = marketValue?.adjustedPrice?.max ?? marketValue?.maxPrice ?? 0;
+                    const avg = marketValue?.adjustedPrice?.average ?? marketValue?.averagePrice ?? Math.floor((min + max) / 2);
+                    return `AED ${avg.toLocaleString()}`;
+                  })()}</p>
+                  <button
+                    type="button"
+                    onClick={() => nameInputRef.current?.focus()}
+                    className="inline-flex items-center gap-2 bg-blue hover:bg-blue-dark text-white font-extrabold text-sm px-6 py-3 rounded-lg transition-colors"
+                  >
+                    Book Appointment Now <ArrowRight size={16} />
+                  </button>
+                </>
+              )}
+            </div>
 
             {/* Car summary pill */}
             {(makeName || modelName) && (
-          <div className="flex items-center gap-3 bg-white border border-border rounded-2xl px-5 py-4 shadow-[0_2px_16px_rgba(43,108,245,0.08)]">
-            <div className="w-10 h-10 bg-blue/10 rounded-xl flex items-center justify-center shrink-0">
-              <Car size={20} className="text-blue" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-text font-semibold uppercase tracking-wide">Your Car</p>
-              <p className="font-extrabold text-navy">
-                {[year, makeName, modelName].filter(Boolean).join(" ")}
-                {mileage && <span className="font-normal text-gray-text ml-2">· {mileage}</span>}
-              </p>
-            </div>
-          </div>
+              <div className="flex items-center gap-3 bg-white border border-border rounded-2xl px-5 py-4 shadow-[0_2px_16px_rgba(43,108,245,0.08)]">
+                <div className="w-10 h-10 bg-blue/10 rounded-xl flex items-center justify-center shrink-0">
+                  <Car size={20} className="text-blue" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-text font-semibold uppercase tracking-wide">Your Car</p>
+                  <p className="font-extrabold text-navy">
+                    {[year, makeName, modelName].filter(Boolean).join(" ")}
+                    {mileage && <span className="font-normal text-gray-text ml-2">· {mileage}</span>}
+                  </p>
+                </div>
+              </div>
             )}
           </aside>
 
           <main className="space-y-6 min-w-0">
-            {/* Step 1 — Contact Details (phone verification here is optional, only unlocks the price above) */}
+            {/* Step 1 — Contact Details */}
           <div className="bg-white rounded-2xl border border-border p-6 shadow-[0_2px_16px_rgba(43,108,245,0.06)]">
             <h2 className="text-base font-extrabold text-navy mb-4 flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-blue text-white text-xs flex items-center justify-center font-black">1</span>
@@ -583,69 +649,82 @@ function AppointmentContent() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Phone + optional verify-to-unlock-price flow */}
               <div className="sm:col-span-2">
-                <div className="flex border-[1.5px] border-border rounded-[10px] overflow-hidden bg-light-bg focus-within:border-blue focus-within:bg-white focus-within:shadow-[0_0_0_3px_rgba(43,108,245,0.1)] transition-all">
-                  <span className="flex items-center gap-1 px-3 bg-blue/5 border-r border-border text-navy font-bold text-sm whitespace-nowrap shrink-0">
-                    🇦🇪 +971
-                  </span>
-                  <input
-                    ref={phoneInputRef}
-                    type="tel"
-                    className="flex-1 px-3 py-3 bg-transparent text-sm text-navy outline-none"
-                    placeholder="5X XXX XXXX"
-                    value={phone}
-                    onChange={(e) => handlePhoneInput(e.target.value)}
-                    maxLength={10}
-                    required
-                  />
-                  {verified && (
-                    <span className="flex items-center gap-1 px-3 text-green-600 text-xs font-bold shrink-0">
-                      <CheckCircle2 size={14} /> Verified
-                    </span>
-                  )}
-                </div>
-
-                {!verified && otpStage === "idle" && (
-                  <button
-                    type="button"
-                    onClick={handleSendOtp}
-                    disabled={otpSubmitting}
-                    className="mt-2 text-xs font-bold text-blue hover:underline disabled:opacity-60"
-                  >
-                    {otpSubmitting ? "Sending code…" : "Verify this number to unlock your exact offer and book →"}
-                  </button>
-                )}
-
-                {otpStage === "sent" && (
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <span className="text-xs text-gray-text">Code sent to +971 {phone}:</span>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      className="w-28 px-3 py-2 border-[1.5px] border-border rounded-lg text-center text-sm tracking-[4px] font-bold text-navy bg-light-bg outline-none focus:border-blue transition-all"
-                      placeholder="••••••"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                      maxLength={6}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleVerifyOtp}
-                      disabled={otpSubmitting}
-                      className="text-xs font-bold text-white bg-blue px-3 py-2 rounded-lg hover:bg-blue-dark transition-colors disabled:opacity-60"
-                    >
-                      {otpSubmitting ? "Verifying…" : "Verify"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleChangeNumber}
-                      className="text-xs text-gray-text hover:text-blue transition-colors"
-                    >
-                      Cancel
-                    </button>
+                {verified ? (
+                  <div className="flex items-center gap-2 px-4 py-3 border-[1.5px] border-green-200 bg-green-50 rounded-[10px]">
+                    <CheckCircle2 size={16} className="text-green-600 shrink-0" />
+                    <span className="text-navy font-bold text-sm">+971 {phone}</span>
+                    <span className="text-green-700 font-bold text-xs ml-auto shrink-0">Verified</span>
                   </div>
-                )}
+                ) : otpOrigin === "left" ? (
+                  <div className="flex items-center gap-2 px-4 py-3 border-[1.5px] border-border bg-light-bg rounded-[10px]">
+                    <span className="text-navy font-bold text-sm">+971 {phone}</span>
+                    <span className="text-gray-text text-xs ml-auto shrink-0">Verifying on the left ↖</span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex border-[1.5px] border-border rounded-[10px] overflow-hidden bg-light-bg focus-within:border-blue focus-within:bg-white focus-within:shadow-[0_0_0_3px_rgba(43,108,245,0.1)] transition-all">
+                      <span className="flex items-center gap-1 px-3 bg-blue/5 border-r border-border text-navy font-bold text-sm whitespace-nowrap shrink-0">
+                        🇦🇪 +971
+                      </span>
+                      <input
+                        ref={phoneInputRef}
+                        type="tel"
+                        className="flex-1 px-3 py-3 bg-transparent text-sm text-navy outline-none"
+                        placeholder="5X XXX XXXX"
+                        value={phone}
+                        onChange={(e) => handlePhoneInput(e.target.value)}
+                        maxLength={10}
+                        required
+                      />
+                    </div>
 
-                {otpError && <p className="text-red-600 text-xs font-semibold mt-2">{otpError}</p>}
+                    {otpStage === "idle" && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setOtpOrigin("right");
+                          handleSendOtp();
+                        }}
+                        disabled={otpSubmitting || phone.length < 9 || !phone.startsWith("5")}
+                        className="mt-2 text-xs font-bold text-blue hover:underline disabled:opacity-60"
+                      >
+                        {otpSubmitting ? "Sending code…" : "Verify this number to unlock your exact offer and book →"}
+                      </button>
+                    )}
+
+                    {otpStage === "sent" && (
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        <span className="text-xs text-gray-text">Code sent to +971 {phone}:</span>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          className="w-28 px-3 py-2 border-[1.5px] border-border rounded-lg text-center text-sm tracking-[4px] font-bold text-navy bg-light-bg outline-none focus:border-blue transition-all"
+                          placeholder="••••••"
+                          value={otp}
+                          onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                          maxLength={6}
+                        />
+                        <button
+                          type="button"
+                          onClick={handleVerifyOtp}
+                          disabled={otpSubmitting}
+                          className="text-xs font-bold text-white bg-blue px-3 py-2 rounded-lg hover:bg-blue-dark transition-colors disabled:opacity-60"
+                        >
+                          {otpSubmitting ? "Verifying…" : "Verify"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleChangeNumber}
+                          className="text-xs text-gray-text hover:text-blue transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+
+                    {otpError && <p className="text-red-600 text-xs font-semibold mt-2">{otpError}</p>}
+                  </>
+                )}
               </div>
 
               <input
@@ -893,6 +972,24 @@ function AppointmentContent() {
               </Link>
             </div>
           </main>
+
+          <aside className="space-y-6 lg:sticky lg:top-24">
+            {/* Car summary pill */}
+            {(makeName || modelName) && (
+              <div className="flex items-center gap-3 bg-white border border-border rounded-2xl px-5 py-4 shadow-[0_2px_16px_rgba(43,108,245,0.08)]">
+                <div className="w-10 h-10 bg-blue/10 rounded-xl flex items-center justify-center shrink-0">
+                  <Car size={20} className="text-blue" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-text font-semibold uppercase tracking-wide">Your Car</p>
+                  <p className="font-extrabold text-navy">
+                    {[year, makeName, modelName].filter(Boolean).join(" ")}
+                    {mileage && <span className="font-normal text-gray-text ml-2">· {mileage}</span>}
+                  </p>
+                </div>
+              </div>
+            )}
+          </aside>
         </div>
       </div>
     </div>
