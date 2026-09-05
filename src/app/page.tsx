@@ -45,11 +45,6 @@ export default function Home() {
         <div className="max-w-[1400px] mx-auto px-6 pt-24 pb-16 lg:py-24 flex flex-col lg:grid lg:grid-cols-[1.1fr_0.9fr] lg:gap-20 lg:items-stretch">
           {/* Left */}
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left mb-8 lg:mb-0">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 bg-blue/10 text-blue font-bold text-xs tracking-[2px] uppercase px-4 py-1.5 rounded-full border border-blue/20 mb-6">
-              <span className="w-2 h-2 rounded-full bg-blue pulse-dot" />
-              UAE&apos;s #1 Car Buyer
-            </div>
 
             {/* Car Image */}
             <div className="max-w-[480px] lg:max-w-full w-full mb-8">
