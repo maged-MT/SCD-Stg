@@ -57,13 +57,15 @@ export default function Header() {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden lg:flex items-center bg-light-bg rounded-[40px] p-[5px] gap-0.5 border border-border flex-1 max-w-[700px] mx-5">
+        <nav className="hidden lg:flex items-center bg-light-bg rounded-[40px] p-1 gap-1 border border-border mx-5">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className={`px-4 lg:px-5 py-[9px] rounded-[40px] font-semibold text-sm text-navy whitespace-nowrap transition-all duration-200 hover:bg-blue hover:text-white ${
-                link.cta ? "bg-blue text-white shadow-[0_4px_12px_rgba(43,108,245,0.3)]" : ""
+              className={`px-4 lg:px-5 py-2 rounded-[40px] font-semibold text-sm whitespace-nowrap transition-all duration-200 ${
+                link.cta
+                  ? "bg-blue text-white shadow-[0_4px_12px_rgba(43,108,245,0.3)]"
+                  : "text-navy hover:bg-blue/10 hover:text-blue"
               }`}
             >
               {link.label}

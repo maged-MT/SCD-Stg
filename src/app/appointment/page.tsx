@@ -74,13 +74,14 @@ function useMarketValue(
   year: string,
   mileage: string,
   spec: string,
-  trimId: string
+  trimId: string,
+  enabled: boolean
 ) {
   const [data, setData] = useState<MarketValue | null>(null);
-  const [loading, setLoading] = useState(() => Boolean(makeName && modelName && year));
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!makeName || !modelName || !year) return;
+    if (!enabled || !makeName || !modelName || !year) return;
     setLoading(true);
     const params = new URLSearchParams({
       makeName,
@@ -98,7 +99,7 @@ function useMarketValue(
       })
       .catch(() => setData(null))
       .finally(() => setLoading(false));
-  }, [makeName, modelName, year, mileage, spec, trimId]);
+  }, [enabled, makeName, modelName, year, mileage, spec, trimId]);
 
   return { data, loading };
 }
@@ -188,8 +189,8 @@ function AppointmentContent() {
   const [branchesLoading, setBranchesLoading] = useState(false);
   const [branchId, setBranchId] = useState<number | null>(null);
 
-  const { data: marketValue, loading: marketValueLoading } = useMarketValue(makeName, modelName, year, mileage, spec, trimId);
   const verified = otpStage === "verified" && !!accessToken;
+  const { data: marketValue, loading: marketValueLoading } = useMarketValue(makeName, modelName, year, mileage, spec, trimId, verified);
   const selectedCity = useMemo(() => cities.find((c) => c.id === cityId) || null, [cities, cityId]);
   const selectedBranch = useMemo(() => branches.find((b) => b.id === branchId) || null, [branches, branchId]);
   const minimumPrice = marketValue?.adjustedPrice?.min ?? marketValue?.minPrice ?? 0;
