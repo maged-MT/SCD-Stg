@@ -4,8 +4,9 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Search, Check } from "lucide-react";
 import {
-  makeLogoUrl,
+  carData,
   mileageOptions,
+  popularModelCount,
   specsOptions,
   yearOptions,
 } from "@/lib/carData";
@@ -35,9 +36,18 @@ function initialsFor(make: string) {
   return (letters.slice(0, 2) || "?").toUpperCase();
 }
 
-function MakeLogo({ make, logo }: { make: string; logo?: string | null }) {
+function normalizeVehicleName(name: string) {
+  return name.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+const getCarLogo = (brandName: string): string => {
+  const formattedName = brandName.toLowerCase().replace(/\s+/g, "-");
+  return `https://www.carlogos.org/car-logos/${formattedName}-logo.png`;
+};
+
+function MakeLogo({ make }: { make: string }) {
   const [failed, setFailed] = useState(false);
-  const url = logo || makeLogoUrl(make);
+  const url = getCarLogo(make);
 
   if (!url || failed) {
     return (
@@ -194,14 +204,31 @@ export default function EvalForm() {
       .sort((a, b) => Number(b.popular) - Number(a.popular) || a.name.localeCompare(b.name));
   }, [apiMakes, makeSearch]);
 
+  const classifiedPopularModels = useMemo(() => {
+    const limit = Math.min(8, Math.max(1, popularModelCount[make] ?? 1));
+    const configuredNames = (carData[make] ?? []).slice(0, limit).map(normalizeVehicleName);
+    const popularityRank = new Map(configuredNames.map((name, index) => [name, index]));
+    const matched = apiModels
+      .filter((item) => popularityRank.has(normalizeVehicleName(item.name)))
+      .sort((a, b) => popularityRank.get(normalizeVehicleName(a.name))! - popularityRank.get(normalizeVehicleName(b.name))!)
+      .slice(0, 8);
+
+    if (matched.length > 0 || apiModels.length === 0) return matched;
+    return [apiModels.find((item) => item.popular) ?? apiModels[0]];
+  }, [apiModels, make]);
+
+  const popularModelIds = useMemo(
+    () => new Set(classifiedPopularModels.map((item) => item.id)),
+    [classifiedPopularModels]
+  );
   const searchTerm = modelSearch.trim().toLowerCase();
   const filteredPopular = useMemo(
-    () => apiModels.filter((item) => item.popular && item.name.toLowerCase().includes(searchTerm)).sort((a, b) => a.name.localeCompare(b.name)),
-    [apiModels, searchTerm]
+    () => classifiedPopularModels.filter((item) => item.name.toLowerCase().includes(searchTerm)),
+    [classifiedPopularModels, searchTerm]
   );
   const filteredOther = useMemo(
-    () => apiModels.filter((item) => !item.popular && item.name.toLowerCase().includes(searchTerm)).sort((a, b) => a.name.localeCompare(b.name)),
-    [apiModels, searchTerm]
+    () => apiModels.filter((item) => !popularModelIds.has(item.id) && item.name.toLowerCase().includes(searchTerm)).sort((a, b) => a.name.localeCompare(b.name)),
+    [apiModels, popularModelIds, searchTerm]
   );
   const filteredModels = useMemo(
     () => [...filteredPopular, ...filteredOther],
@@ -276,7 +303,7 @@ export default function EvalForm() {
                   makeId === item.id ? "border-blue bg-light-bg" : "border-border bg-white hover:border-blue/40"
                 }`}
               >
-                <MakeLogo make={item.name} logo={item.logo} />
+                <MakeLogo make={item.name} />
                 <span className="text-[11px] font-extrabold text-navy tracking-wide text-center">
                   {item.name.toUpperCase()}
                 </span>
