@@ -4,14 +4,24 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Search, Check } from "lucide-react";
 import {
-  carData,
-  makes,
   makeLogoUrl,
   mileageOptions,
-  popularModelCount,
   specsOptions,
   yearOptions,
 } from "@/lib/carData";
+
+interface VehicleMake {
+  id: number;
+  name: string;
+  logo?: string | null;
+  popular?: boolean;
+}
+
+interface VehicleModel {
+  id: number;
+  name: string;
+  popular?: boolean;
+}
 
 const STEPS = [
   { label: "Make" },
@@ -25,9 +35,9 @@ function initialsFor(make: string) {
   return (letters.slice(0, 2) || "?").toUpperCase();
 }
 
-function MakeLogo({ make }: { make: string }) {
+function MakeLogo({ make, logo }: { make: string; logo?: string | null }) {
   const [failed, setFailed] = useState(false);
-  const url = makeLogoUrl(make);
+  const url = logo || makeLogoUrl(make);
 
   if (!url || failed) {
     return (
@@ -130,8 +140,15 @@ export default function EvalForm() {
 
   // Vehicle selection
   const [make, setMake] = useState("");
+  const [makeId, setMakeId] = useState<number | null>(null);
   const [model, setModel] = useState("");
   const [year, setYear] = useState("");
+  const [apiMakes, setApiMakes] = useState<VehicleMake[]>([]);
+  const [apiModels, setApiModels] = useState<VehicleModel[]>([]);
+  const [makesLoading, setMakesLoading] = useState(true);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [makesError, setMakesError] = useState(false);
+  const [modelsError, setModelsError] = useState(false);
 
   // Details
   const [mileage, setMileage] = useState("");
@@ -141,30 +158,50 @@ export default function EvalForm() {
   const [modelSearch, setModelSearch] = useState("");
   const [showMoreMileage, setShowMoreMileage] = useState(false);
 
-  const models = useMemo(() => (make ? carData[make] || [] : []), [make]);
-
-  // Reset dependent selections when an earlier one changes
   useEffect(() => {
-    setModel("");
-    setModelSearch("");
-  }, [make]);
+    fetch("/api/vehicle-data/makes")
+      .then((response) => {
+        if (!response.ok) throw new Error("Unable to load makes");
+        return response.json();
+      })
+      .then((data) => setApiMakes(Array.isArray(data) ? data : []))
+      .catch(() => setMakesError(true))
+      .finally(() => setMakesLoading(false));
+  }, []);
 
-  const filteredMakes = useMemo(
-    () => makes.filter((m) => m.toLowerCase().includes(makeSearch.trim().toLowerCase())),
-    [makeSearch]
-  );
-  const popCount = make ? (popularModelCount[make] ?? 0) : 0;
-  const popularModels = useMemo(() => models.slice(0, popCount), [models, popCount]);
-  const otherModels = useMemo(() => [...models.slice(popCount)].sort(), [models, popCount]);
+  useEffect(() => {
+    if (makeId === null) return;
+    const controller = new AbortController();
+    fetch(`/api/vehicle-data/makes/${makeId}/models`, { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error("Unable to load models");
+        return response.json();
+      })
+      .then((data) => setApiModels(Array.isArray(data) ? data : []))
+      .catch(() => {
+        if (!controller.signal.aborted) setModelsError(true);
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setModelsLoading(false);
+      });
+    return () => controller.abort();
+  }, [makeId]);
+
+  const filteredMakes = useMemo(() => {
+    const search = makeSearch.trim().toLowerCase();
+    return apiMakes
+      .filter((item) => item.name.toLowerCase().includes(search))
+      .sort((a, b) => Number(b.popular) - Number(a.popular) || a.name.localeCompare(b.name));
+  }, [apiMakes, makeSearch]);
 
   const searchTerm = modelSearch.trim().toLowerCase();
   const filteredPopular = useMemo(
-    () => (searchTerm ? popularModels.filter((m) => m.toLowerCase().includes(searchTerm)) : popularModels),
-    [popularModels, searchTerm]
+    () => apiModels.filter((item) => item.popular && item.name.toLowerCase().includes(searchTerm)).sort((a, b) => a.name.localeCompare(b.name)),
+    [apiModels, searchTerm]
   );
   const filteredOther = useMemo(
-    () => (searchTerm ? otherModels.filter((m) => m.toLowerCase().includes(searchTerm)) : otherModels),
-    [otherModels, searchTerm]
+    () => apiModels.filter((item) => !item.popular && item.name.toLowerCase().includes(searchTerm)).sort((a, b) => a.name.localeCompare(b.name)),
+    [apiModels, searchTerm]
   );
   const filteredModels = useMemo(
     () => [...filteredPopular, ...filteredOther],
@@ -175,12 +212,18 @@ export default function EvalForm() {
 
   const canSubmit = Boolean(mileage && specs);
 
-  const selectMake = (m: string) => {
-    setMake(m);
+  const selectMake = (item: VehicleMake) => {
+    setMake(item.name);
+    setMakeId(item.id);
+    setModel("");
+    setModelSearch("");
+    setApiModels([]);
+    setModelsError(false);
+    setModelsLoading(true);
     setStep(1);
   };
-  const selectModel = (m: string) => {
-    setModel(m);
+  const selectModel = (item: VehicleModel) => {
+    setModel(item.name);
     setStep(2);
   };
   const selectYear = (y: number) => {
@@ -220,22 +263,26 @@ export default function EvalForm() {
         <div>
           <SearchInput value={makeSearch} onChange={setMakeSearch} placeholder="Search makes" />
           <div className="grid grid-cols-3 gap-3 max-h-[420px] overflow-y-auto pr-1">
-            {filteredMakes.map((m) => (
+            {makesLoading ? (
+              <p className="col-span-3 text-center text-sm text-blue font-semibold py-8">Loading makes…</p>
+            ) : makesError ? (
+              <p className="col-span-3 text-center text-sm text-red-600 py-8">Unable to load makes. Please refresh and try again.</p>
+            ) : filteredMakes.map((item) => (
               <button
-                key={m}
+                key={item.id}
                 type="button"
-                onClick={() => selectMake(m)}
+                onClick={() => selectMake(item)}
                 className={`flex flex-col items-center gap-2 p-3 rounded-2xl border-[1.5px] transition-all ${
-                  make === m ? "border-blue bg-light-bg" : "border-border bg-white hover:border-blue/40"
+                  makeId === item.id ? "border-blue bg-light-bg" : "border-border bg-white hover:border-blue/40"
                 }`}
               >
-                <MakeLogo make={m} />
+                <MakeLogo make={item.name} logo={item.logo} />
                 <span className="text-[11px] font-extrabold text-navy tracking-wide text-center">
-                  {m.toUpperCase()}
+                  {item.name.toUpperCase()}
                 </span>
               </button>
             ))}
-            {filteredMakes.length === 0 && (
+            {!makesLoading && !makesError && filteredMakes.length === 0 && (
               <p className="col-span-3 text-center text-sm text-gray-text py-8">No makes match your search.</p>
             )}
           </div>
@@ -248,21 +295,28 @@ export default function EvalForm() {
           <BackLink onClick={() => setStep(0)} label="Back to make" />
           <SearchInput value={modelSearch} onChange={setModelSearch} placeholder="Search models" />
           <div className="max-h-[420px] overflow-y-auto pr-1 space-y-4">
+            {modelsLoading && (
+              <p className="text-center text-sm text-blue font-semibold py-8">Loading {make} models…</p>
+            )}
+            {modelsError && (
+              <p className="text-center text-sm text-red-600 py-8">Unable to load models. Please go back and try again.</p>
+            )}
+
             {/* Popular models */}
-            {filteredPopular.length > 0 && (
+            {!modelsLoading && !modelsError && filteredPopular.length > 0 && (
               <div>
                 <p className="text-xs font-bold text-gray-text uppercase tracking-wider mb-2">Popular Models</p>
                 <div className="grid grid-cols-3 gap-3">
-                  {filteredPopular.map((m) => (
+                  {filteredPopular.map((item) => (
                     <button
-                      key={m}
+                      key={item.id}
                       type="button"
-                      onClick={() => selectModel(m)}
+                      onClick={() => selectModel(item)}
                       className={`py-3 px-2 rounded-xl border-[1.5px] text-sm font-extrabold transition-all ${
-                        model === m ? "border-blue bg-blue text-white" : "border-blue/20 text-navy bg-blue/[0.03] hover:border-blue/40"
+                        model === item.name ? "border-blue bg-blue text-white" : "border-blue/20 text-navy bg-blue/[0.03] hover:border-blue/40"
                       }`}
                     >
-                      {m}
+                      {item.name}
                     </button>
                   ))}
                 </div>
@@ -281,22 +335,22 @@ export default function EvalForm() {
             {/* Remaining models (alphabetical) */}
             {filteredOther.length > 0 && (
               <div className="grid grid-cols-3 gap-3">
-                {filteredOther.map((m) => (
+                {filteredOther.map((item) => (
                   <button
-                    key={m}
+                    key={item.id}
                     type="button"
-                    onClick={() => selectModel(m)}
+                    onClick={() => selectModel(item)}
                     className={`py-3 px-2 rounded-xl border-[1.5px] text-sm font-extrabold transition-all ${
-                      model === m ? "border-blue bg-blue text-white" : "border-border text-navy hover:border-blue/40"
+                      model === item.name ? "border-blue bg-blue text-white" : "border-border text-navy hover:border-blue/40"
                     }`}
                   >
-                    {m}
+                    {item.name}
                   </button>
                 ))}
               </div>
             )}
 
-            {filteredModels.length === 0 && (
+            {!modelsLoading && !modelsError && filteredModels.length === 0 && (
               <p className="text-center text-sm text-gray-text py-8">No models match your search.</p>
             )}
           </div>
