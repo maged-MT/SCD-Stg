@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Search, Check } from "lucide-react";
 import {
@@ -12,58 +12,6 @@ import {
   specsOptions,
   yearOptions,
 } from "@/lib/carData";
-
-interface BodyType {
-  id: number;
-  name: string;
-  label: string;
-  available: boolean;
-}
-
-interface Trim {
-  id: number;
-  name: string;
-}
-
-interface VehicleSpecs {
-  bodyTypes: BodyType[];
-  engineSizes: string[];
-  trims?: Trim[];
-}
-
-function useVehicleSpecs(make: string, model: string, year: string) {
-  const [specs, setSpecs] = useState<VehicleSpecs | null>(null);
-  const [loading, setLoading] = useState(false);
-  const prevKey = useRef("");
-
-  useEffect(() => {
-    const key = `${make}|${model}|${year}`;
-    if (!make || !model || !year || key === prevKey.current) return;
-    prevKey.current = key;
-
-    setLoading(true);
-    setSpecs(null);
-
-    const params = new URLSearchParams({ make, model, year });
-    fetch(`/api/vehicle-specs?${params}`)
-      .then((r) => r.json())
-      .then((json) => {
-        if (json?.success && json?.data) setSpecs(json.data);
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [make, model, year]);
-
-  // Reset when vehicle selection clears
-  useEffect(() => {
-    if (!make || !model || !year) {
-      setSpecs(null);
-      prevKey.current = "";
-    }
-  }, [make, model, year]);
-
-  return { specs, loading };
-}
 
 const STEPS = [
   { label: "Make" },
@@ -188,8 +136,6 @@ export default function EvalForm() {
   // Details
   const [mileage, setMileage] = useState("");
   const [specs, setSpecs] = useState("");
-  const [trimId, setTrimId] = useState<number | null>(null);
-  const [trimName, setTrimName] = useState("");
 
   const [makeSearch, setMakeSearch] = useState("");
   const [modelSearch, setModelSearch] = useState("");
@@ -202,16 +148,6 @@ export default function EvalForm() {
     setModel("");
     setModelSearch("");
   }, [make]);
-
-  useEffect(() => {
-    setTrimId(null);
-    setTrimName("");
-  }, [make, model, year]);
-
-  const { specs: vehicleSpecs, loading: specsLoading } = useVehicleSpecs(make, model, year);
-
-  const trimOptions = (vehicleSpecs?.trims ?? []).filter((t) => t.name.trim());
-  const showSpecsFields = !specsLoading && vehicleSpecs !== null;
 
   const filteredMakes = useMemo(
     () => makes.filter((m) => m.toLowerCase().includes(makeSearch.trim().toLowerCase())),
@@ -261,8 +197,6 @@ export default function EvalForm() {
       year,
       mileage,
       spec: specs,
-      ...(trimId && { trimId: String(trimId) }),
-      ...(trimName && { trim: trimName }),
     });
     router.push(`/appointment?${apptParams.toString()}`);
   };
@@ -433,39 +367,6 @@ export default function EvalForm() {
                 )}
               </div>
             </div>
-
-            {/* Vehicle specs loading indicator */}
-            {specsLoading && (
-              <div className="flex items-center gap-2 py-1">
-                <svg className="animate-spin h-3.5 w-3.5 text-blue shrink-0" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-                <span className="text-xs text-blue font-medium">Fetching vehicle specs…</span>
-              </div>
-            )}
-
-            {/* Trim — sourced from vehicle-specs */}
-            {showSpecsFields && trimOptions.length > 0 && (
-              <div>
-                <p className="text-sm font-extrabold text-navy mb-2">Trim</p>
-                <div className="flex flex-wrap gap-2.5">
-                  {trimOptions.map((t) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => {
-                        setTrimId(t.id);
-                        setTrimName(t.name);
-                      }}
-                      className={pillCls(trimId === t.id)}
-                    >
-                      {t.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Regional specs */}
             <div>
