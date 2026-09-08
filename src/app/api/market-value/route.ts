@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 
-const CARHUB_BASE_URL =
-  process.env.CARHUB_BASE_URL || "https://carmarkethub.com";
+const CARHUB_BASE_URL ="https://carmarkethub.com";
 const CARHUB_API_KEY =
   process.env.CARHUB_API_KEY || "baddelha_live_pk_2024_a8f9c3e1d4b7";
 
@@ -40,16 +39,16 @@ export async function GET(request: Request) {
     const requestedId = Number(requestedTrimId) || 0;
     const trimId = (requestedId && trims.some((t) => t.id === requestedId) ? requestedId : trims[0]?.id) ?? 0;
 
-    if (!trimId) {
-      return NextResponse.json(
-        { error: "Vehicle not found in database", noData: true },
-        { status: 404 }
-      );
-    }
+    // if (!trimId) {
+    //   return NextResponse.json(
+    //     { error: "Vehicle not found in database", noData: true },
+    //     { status: 404 }
+    //   );
+    // }
 
     // ── Step 2: fetch market value ─────────────────────────────────────────
     const mvParams = new URLSearchParams({
-      trimId: String(trimId),
+      trimId: trimId ? String(trimId) : "",
       year,
       make: makeName,
       model: modelName,
@@ -60,8 +59,11 @@ export async function GET(request: Request) {
       `${CARHUB_BASE_URL}/api/public/market-value?${mvParams}`,
       { headers: HEADERS, next: { revalidate: 1800 } }
     );
+
+    console.log("market-value url:", `${CARHUB_BASE_URL}/api/public/market-value?${mvParams}`);
     const mvJson = await mvRes.json();
 
+    console.log("market-value response:", mvJson);
     return NextResponse.json(mvJson, { status: mvRes.status });
   } catch (err) {
     console.error("market-value proxy error:", err);
