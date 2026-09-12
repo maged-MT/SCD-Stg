@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Phone, Mail, MapPin, Clock } from "lucide-react";
+import { getStoredUtmParams, UTM_KEYS } from "@/lib/utm";
 
 const SUBMIT_URL = "https://smartcardeals.net/apitestnew/submit_lead.php";
 
@@ -36,6 +37,12 @@ export default function ContactPageClient() {
       make: "Contact",
       model: subject,
       specs: message.trim(),
+    });
+
+    const utmParams = getStoredUtmParams();
+    UTM_KEYS.forEach((key) => {
+      const value = utmParams[key];
+      if (value) payload.set(key, value);
     });
 
     try {

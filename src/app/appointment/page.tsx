@@ -16,6 +16,7 @@ import {
   UserRound,
   ArrowRight,
 } from "lucide-react";
+import { getStoredUtmParams, UTM_KEYS } from "@/lib/utm";
 
 const MapPicker = dynamic(() => import("@/components/MapPicker"), { ssr: false });
 
@@ -459,6 +460,12 @@ function AppointmentContent() {
       owner_id: "1",
       lead_source_id: "1",
       lead_status_id: "1",
+    });
+
+    const utmParams = getStoredUtmParams();
+    UTM_KEYS.forEach((key) => {
+      const value = utmParams[key];
+      if (value) leadPayload.set(key, value);
     });
 
     fetch(SUBMIT_URL, {
