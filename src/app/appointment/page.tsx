@@ -23,6 +23,8 @@ const MapPicker = dynamic(() => import("@/components/MapPicker"), { ssr: false }
 const SUBMIT_URL = "https://smartcardeals.net/apitestnew/submit_lead.php";
 const APPOINTMENT_DRAFT_KEY = "scd_appointment_draft";
 
+type ErrorField = "name" | "phone" | "email" | "city" | "otp" | "location" | "submit";
+
 interface MarketValue {
   adjustedPrice?: { min: number; max: number; average: number };
   minPrice?: number;
@@ -161,6 +163,7 @@ function AppointmentContent() {
   const [email, setEmail] = useState("");
   const [cityId, setCityId] = useState<number | null>(null);
   const [contactError, setContactError] = useState("");
+  const [errorField, setErrorField] = useState<ErrorField | null>(null);
   const [booking, setBooking] = useState(false);
   const phoneInputRef = useRef<HTMLInputElement>(null);
   const leftPhoneInputRef = useRef<HTMLInputElement>(null);
@@ -286,9 +289,33 @@ function AppointmentContent() {
       .finally(() => setBranchesLoading(false));
   }, [locationType, selectedCity]);
 
+  const failValidation = (field: ErrorField, message: string) => {
+    setContactError(message);
+    setErrorField(field);
+    // Wait for the error banner + highlight to render so layout has settled,
+    // then scroll with an offset for the fixed header.
+    setTimeout(() => {
+      const targetId =
+        field === "otp" ? "appt-phone"
+        : field === "phone" && otpOrigin === "left" ? "appt-reveal"
+        : `appt-${field}`;
+      const el = document.getElementById(targetId);
+      if (!el) return;
+      const top = el.getBoundingClientRect().top + window.scrollY - 120;
+      window.scrollTo({ top: Math.max(top, 0), behavior: "smooth" });
+      if (field === "name") nameInputRef.current?.focus({ preventScroll: true });
+      else if (field === "phone") (otpOrigin === "left" ? leftPhoneInputRef : phoneInputRef).current?.focus({ preventScroll: true });
+      else if (field === "email" || field === "city") el.focus({ preventScroll: true });
+    }, 80);
+  };
+
+  const clearFieldError = (...fields: ErrorField[]) =>
+    setErrorField((current) => (current && fields.includes(current) ? null : current));
+
   const handleLocationSelect = (coords: [number, number], address: string) => {
     setLocationCoords(coords);
     setLocationAddress(address);
+    clearFieldError("location");
   };
 
   const handlePhoneInput = (val: string) => {
@@ -296,6 +323,7 @@ function AppointmentContent() {
     if (digits.startsWith("971")) digits = digits.slice(3);
     if (digits.startsWith("0")) digits = digits.slice(1);
     setPhone(digits.slice(0, 9));
+    clearFieldError("phone", "otp");
     // Changing the number invalidates any in-progress / completed verification for the old one.
     if (otpStage !== "idle") {
       setOtpStage("idle");
@@ -370,6 +398,7 @@ function AppointmentContent() {
       }
       setAccessToken(token);
       setOtpStage("verified");
+      clearFieldError("otp", "phone");
     } catch {
       setOtpError("Incorrect code. Please try again.");
     } finally {
@@ -386,24 +415,33 @@ function AppointmentContent() {
 
   const handleConfirm = async () => {
     setContactError("");
-    if (!name.trim() || phone.length < 9 || !phone.startsWith("5") || !cityId) {
-      setContactError("Please fill in your name, phone, and city to continue.");
+    setErrorField(null);
+    if (!name.trim()) {
+      failValidation("name", "Please enter your name.");
+      return;
+    }
+    if (phone.length < 9 || !phone.startsWith("5")) {
+      failValidation("phone", "Please enter a valid UAE phone number (5X XXX XXXX).");
+      return;
+    }
+    if (!cityId) {
+      failValidation("city", "Please select your city.");
       return;
     }
     if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      setContactError("Please enter a valid email address.");
+      failValidation("email", "Please enter a valid email address.");
       return;
     }
     if (!verified || !accessToken) {
-      setContactError("Please verify your phone number above to book the appointment.");
+      failValidation("otp", "Please verify your phone number above to book the appointment.");
       return;
     }
     if (locationType === "home" && (!locationAddress || !locationCoords)) {
-      setContactError("Please set your inspection address on the map.");
+      failValidation("location", "Please set your inspection address on the map.");
       return;
     }
     if (locationType === "branch" && !branchId) {
-      setContactError("Please select a branch.");
+      failValidation("location", "Please select a branch.");
       return;
     }
 
@@ -440,7 +478,7 @@ function AppointmentContent() {
         throw new Error(message || "Unable to book your appointment. Please try again.");
       }
     } catch (error) {
-      setContactError(error instanceof Error ? error.message : "Unable to book your appointment. Please try again.");
+      failValidation("submit", error instanceof Error ? error.message : "Unable to book your appointment. Please try again.");
       setBooking(false);
       return;
     }
@@ -520,7 +558,7 @@ function AppointmentContent() {
         <div className="grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] gap-6 lg:gap-8 items-start">
           <aside className="space-y-6 lg:sticky lg:top-24">
             {/* Reveal Price Card */}
-            <div className="bg-white border-2 border-blue rounded-[20px] p-6 text-center shadow-[0_8px_30px_rgba(43,108,245,0.12)]">
+            <div id="appt-reveal" className="bg-white border-2 border-blue rounded-[20px] p-6 text-center shadow-[0_8px_30px_rgba(43,108,245,0.12)]">
               <p className="text-xs font-black text-blue uppercase tracking-[1.5px] mb-2">
                 {verified && !marketValueLoading && estimatedPrice <= 0 ? "THE NEXT STEP" : "Your vehicle market estimate"}
               </p>
@@ -651,12 +689,12 @@ function AppointmentContent() {
                 <div className="w-10 h-10 bg-blue/10 rounded-xl flex items-center justify-center shrink-0">
                   <Car size={20} className="text-blue" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-gray-text font-semibold uppercase tracking-wide">Your Car</p>
                   <p className="font-extrabold text-navy">
                     {[year, makeName, modelName].filter(Boolean).join(" ")}
-                    {mileage && <span className="font-normal text-gray-text ml-2">· {mileage}</span>}
                   </p>
+                  {mileage && <p className="text-sm font-normal text-gray-text mt-0.5">{mileage}</p>}
                 </div>
               </div>
             )}
@@ -672,7 +710,7 @@ function AppointmentContent() {
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Phone + optional verify-to-unlock-price flow */}
-              <div className="sm:col-span-2">
+              <div id="appt-phone" className="sm:col-span-2">
                 {verified ? (
                   <div className="flex items-center gap-2 px-4 py-3 border-[1.5px] border-green-200 bg-green-50 rounded-[10px]">
                     <CheckCircle2 size={16} className="text-green-600 shrink-0" />
@@ -680,13 +718,17 @@ function AppointmentContent() {
                     <span className="text-green-700 font-bold text-xs ml-auto shrink-0">Verified</span>
                   </div>
                 ) : otpOrigin === "left" ? (
-                  <div className="flex items-center gap-2 px-4 py-3 border-[1.5px] border-border bg-light-bg rounded-[10px]">
+                  <div className={`flex items-center gap-2 px-4 py-3 border-[1.5px] bg-light-bg rounded-[10px] transition-all ${
+                    errorField === "otp" || errorField === "phone" ? "border-red-400 shadow-[0_0_0_3px_rgba(239,68,68,0.12)]" : "border-border"
+                  }`}>
                     <span className="text-navy font-bold text-sm">+971 {phone}</span>
                     <span className="text-gray-text text-xs ml-auto shrink-0">Verifying on the left ↖</span>
                   </div>
                 ) : (
                   <>
-                    <div className="flex border-[1.5px] border-border rounded-[10px] overflow-hidden bg-light-bg focus-within:border-blue focus-within:bg-white focus-within:shadow-[0_0_0_3px_rgba(43,108,245,0.1)] transition-all">
+                    <div className={`flex border-[1.5px] rounded-[10px] overflow-hidden bg-light-bg focus-within:border-blue focus-within:bg-white focus-within:shadow-[0_0_0_3px_rgba(43,108,245,0.1)] transition-all ${
+                      errorField === "phone" || errorField === "otp" ? "border-red-400 shadow-[0_0_0_3px_rgba(239,68,68,0.12)]" : "border-border"
+                    }`}>
                       <span className="flex items-center gap-1 px-3 bg-blue/5 border-r border-border text-navy font-bold text-sm whitespace-nowrap shrink-0">
                         🇦🇪 +971
                       </span>
@@ -752,29 +794,39 @@ function AppointmentContent() {
               </div>
 
               <input
+                id="appt-name"
                 ref={nameInputRef}
                 type="text"
-                className={inputCls}
+                className={`${inputCls} ${errorField === "name" ? "!border-red-400 !bg-red-50/60" : ""}`}
                 placeholder="Your Full Name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  clearFieldError("name");
+                }}
                 required
               />
               <input
+                id="appt-email"
                 type="email"
-                className={inputCls}
+                className={`${inputCls} ${errorField === "email" ? "!border-red-400 !bg-red-50/60" : ""}`}
                 placeholder="Email Address (optional)"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  clearFieldError("email");
+                }}
               />
               <div className="relative sm:col-span-2">
                 <select
-                  className={selectCls}
+                  id="appt-city"
+                  className={`${selectCls} ${errorField === "city" ? "!border-red-400 !bg-red-50/60" : ""}`}
                   value={cityId ?? ""}
                   onChange={(e) => {
                     const id = e.target.value ? Number(e.target.value) : null;
                     setCityId(id);
                     setBranchId(null);
+                    clearFieldError("city");
                     const city = cities.find((c) => c.id === id);
                     if (city && city.branchCount === 0) setLocationType("home");
                   }}
@@ -847,7 +899,9 @@ function AppointmentContent() {
           </div>
 
           {/* Step 3 — Location: map for home visits, branch picker for branch visits */}
-          <div className="bg-white rounded-2xl border border-border p-6 shadow-[0_2px_16px_rgba(43,108,245,0.06)]">
+          <div id="appt-location" className={`bg-white rounded-2xl border p-6 shadow-[0_2px_16px_rgba(43,108,245,0.06)] transition-all ${
+            errorField === "location" ? "!border-red-400 shadow-[0_0_0_3px_rgba(239,68,68,0.12)]" : "border-border"
+          }`}>
             <h2 className="text-base font-extrabold text-navy mb-4 flex items-center gap-2">
               <span className="w-6 h-6 rounded-full bg-blue text-white text-xs flex items-center justify-center font-black">3</span>
               <MapPin size={16} className="text-blue" />
@@ -874,7 +928,10 @@ function AppointmentContent() {
                   <button
                     key={b.id}
                     type="button"
-                    onClick={() => setBranchId(b.id)}
+                    onClick={() => {
+                      setBranchId(b.id);
+                      clearFieldError("location");
+                    }}
                     className={`text-left px-4 py-3 rounded-xl border-2 text-sm transition-all duration-200 ${
                       branchId === b.id ? "border-blue bg-blue/5" : "border-border hover:border-blue/40"
                     }`}
@@ -955,7 +1012,7 @@ function AppointmentContent() {
           </div>
 
           {/* Summary + Confirm */}
-          <div className="bg-white rounded-2xl border border-border p-6 shadow-[0_2px_16px_rgba(43,108,245,0.06)]">
+          <div id="appt-submit" className="bg-white rounded-2xl border border-border p-6 shadow-[0_2px_16px_rgba(43,108,245,0.06)]">
             <h3 className="font-extrabold text-lg text-navy mb-4">Appointment Summary</h3>
             <div className="space-y-3 mb-6 text-navy text-sm font-semibold">
               <p>{locationType === "home" ? "🏠 Home Visit" : "🏢 Branch Visit"}</p>
@@ -996,24 +1053,6 @@ function AppointmentContent() {
               </Link>
             </div>
           </main>
-
-          <aside className="space-y-6 lg:sticky lg:top-24">
-            {/* Car summary pill */}
-            {(makeName || modelName) && (
-              <div className="flex items-center gap-3 bg-white border border-border rounded-2xl px-5 py-4 shadow-[0_2px_16px_rgba(43,108,245,0.08)]">
-                <div className="w-10 h-10 bg-blue/10 rounded-xl flex items-center justify-center shrink-0">
-                  <Car size={20} className="text-blue" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-text font-semibold uppercase tracking-wide">Your Car</p>
-                  <p className="font-extrabold text-navy">
-                    {[year, makeName, modelName].filter(Boolean).join(" ")}
-                    {mileage && <span className="font-normal text-gray-text ml-2">· {mileage}</span>}
-                  </p>
-                </div>
-              </div>
-            )}
-          </aside>
         </div>
       </div>
     </div>

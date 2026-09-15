@@ -13,6 +13,8 @@ export async function POST(request: Request) {
     body: JSON.stringify({ mobile: body.mobile }),
     cache: "no-store",
   });
+  console.log(res);
   const json = await readJson(res);
+  console.log(json);
   return NextResponse.json(json ?? {}, { status: res.status });
 }
