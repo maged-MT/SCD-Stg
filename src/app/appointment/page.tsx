@@ -375,8 +375,8 @@ function AppointmentContent() {
 
   const handleVerifyOtp = async () => {
     setOtpError("");
-    if (otp.length !== 6) {
-      setOtpError("Enter the 6-digit code.");
+    if (otp.length !== 4) {
+      setOtpError("Enter the 4-digit code.");
       return;
     }
     setOtpSubmitting(true);
@@ -617,10 +617,10 @@ function AppointmentContent() {
                           inputMode="numeric"
                           autoFocus
                           className="flex-1 min-w-0 px-3 py-3 bg-transparent text-center text-sm tracking-[4px] font-bold text-navy outline-none"
-                          placeholder="••••••"
+                          placeholder="••••"
                           value={otp}
-                          onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                          maxLength={6}
+                          onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                          maxLength={4}
                         />
                         <button
                           type="button"
@@ -765,10 +765,10 @@ function AppointmentContent() {
                           type="text"
                           inputMode="numeric"
                           className="w-28 px-3 py-2 border-[1.5px] border-border rounded-lg text-center text-sm tracking-[4px] font-bold text-navy bg-light-bg outline-none focus:border-blue transition-all"
-                          placeholder="••••••"
+                          placeholder="••••"
                           value={otp}
-                          onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                          maxLength={6}
+                          onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                          maxLength={4}
                         />
                         <button
                           type="button"
